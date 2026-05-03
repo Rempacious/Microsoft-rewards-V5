@@ -1,0 +1,19 @@
+{
+  "name": "microsoft-rewards-bot-core",
+  "version": "1.0.0",
+  "description": "Official Core plugin for Microsoft Rewards Bot",
+  "author": "LightZirconite",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "24.15.0"
+  },
+  "msrb": {
+    "officialPlugin": "core",
+    "indexSha256": "979f4741c8d81907e9185479a7926b2cf62865898a15225ec4f82b951d13a957"
+  },
+  "dependencies": {
+    "bytenode": "^1.5.7"
+  }
+}
