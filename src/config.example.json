@@ -1,7 +1,7 @@
 {
     "baseURL": "https://rewards.bing.com/dashboard",
     "sessionPath": "sessions",
-    "headless": false,
+    "headless": true,
     "runOnZeroPoints": false,
     "clusters": 1,
     "errorDiagnostics": false,
@@ -9,7 +9,7 @@
         "doDailySet": true,
         "doSpecialPromotions": true,
         "doMorePromotions": true,
-        "doAppPromotions": true,
+        "doAppPromotions": false,
         "doDesktopSearch": true,
         "doMobileSearch": true,
         "doDailyCheckIn": true,
@@ -20,11 +20,11 @@
         "doClaimPoints": true,
         "enforceCoreStreakProtectionGate": true
     },
-    "searchOnBingLocalQueries": false,
+    "searchOnBingLocalQueries": true,
     "globalTimeout": "30sec",
     "searchSettings": {
-        "scrollRandomResults": false,
-        "clickRandomResults": false,
+        "scrollRandomResults": true,
+        "clickRandomResults": true,
         "parallelSearching": true,
         "queryEngines": ["google", "wikipedia", "reddit", "local"],
         "searchResultVisitTime": "10sec",
@@ -37,7 +37,7 @@
             "max": "1min"
         }
     },
-    "debugLogs": false,
+    "debugLogs": true,
     "consoleLogFilter": {
         "enabled": false,
         "mode": "whitelist",

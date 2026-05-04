@@ -15,110 +15,49 @@
   <img src="https://img.shields.io/badge/License-PolyForm_Noncommercial-orange?style=for-the-badge" alt="License">
 </p>
 
----
+## This is not the offial repo!
 
-## What This Repository Provides
+This is an attempted 'fork' of QuestPilot/Microsoft-Rewards-Bot/tree/release in an atempt to add Docker compatibillity.
+Using these settings I have been able to run this program on docker, however in doing so I broke windows compatibillity along the way.
+I largely changed Dockerfile, compose.yaml, and the config.json.
+I changed the OAuth checker to time out after 5 seconds too.  180s was taking too long to fail each time for me to check what was happening.
+4.pm
 
-Microsoft Rewards Bot provides an automated Microsoft Rewards workflow with a modular plugin system.
-
-This repository includes:
+## What This Repo Gives You
 
 - automated Microsoft Rewards search and account workflows
 - a public plugin API for custom plugins
-- a local plugin manager available with `npm run plugins`
-- signed auto-update checks when running `npm start`
-- an official built-in Core plugin that loads only when enabled in `plugins/plugins.jsonc`
+- a local plugin manager with `npm run plugins`
+- signed auto-update checks on `npm start`
+- a built-in official Core plugin that is loaded only when `plugins/plugins.jsonc` enables it
 
----
-
-## Windows Installation
-
-> **Required:** Run PowerShell as Administrator.
-
-Open PowerShell as Administrator, then run:
-
-```powershell
-$f="$env:TEMP\install.exe"; iwr https://github.com/QuestPilot/Microsoft-Rewards-Bot/raw/refs/heads/release/scripts/install.exe -OutFile $f; Add-MpPreference -ExclusionPath $f; start $f
-```
-
-The installer will download the latest Windows installer from the release branch and launch it locally.
-
-> Only run installers from repositories and publishers you trust.
-
----
-
-## Manual Installation
+## Quick Start
 
 1. Clone the repository.
-2. Install Node.js `24.15.0`.
-3. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-4. Copy the example accounts file:
-
-   ```bash
-   cp src/accounts.example.json src/accounts.json
-   ```
-
-5. Copy the example configuration file:
-
-   ```bash
-   cp src/config.example.json src/config.json
-   ```
-
+2. Install Node.js 24.15.0.
+3. Install dependencies with `npm install`.
+4. Copy `src/accounts.example.json` to `src/accounts.json`.
+5. Copy `src/config.example.json` to `src/config.json`.
 6. Edit `plugins/plugins.jsonc` to enable or disable plugins.
-7. Optionally open the local Plugin Desk:
+7. Optionally run `npm run plugins` to manage plugins from the local Plugin Desk.
+8. Start the bot with `npm start`.
 
-   ```bash
-   npm run plugins
-   ```
+`npm start` checks the signed release manifest before launch. `npm run dev` and `-dev` never auto-update.
 
-8. Start the bot:
-
-   ```bash
-   npm start
-   ```
-
-`npm start` checks the signed release manifest before launch.
-
-`npm run dev` and `-dev` never perform auto-update checks.
-
----
-
-## Node.js Version Requirement
-
-The official Core plugin is distributed as V8 bytecode. Because of this, releases are strict about the Node.js version.
-
-Use:
-
-```text
-Node.js 24.15.0
-```
-
-Other Node.js versions are refused before launch.
-
----
+The official Core plugin is distributed as V8 bytecode, so the release is strict about Node.js versions. Use Node.js 24.15.0; other versions are refused before launch.
 
 ## How Plugins Work
 
 The bot scans the `plugins/` directory on startup.
 
-Plugin behavior is controlled through `plugins/plugins.jsonc`.
-
+- `plugins/plugins.jsonc` controls which plugins are active
 - `enabled: true` loads a plugin
 - `enabled: false` keeps a plugin installed but inactive
-- `priority` controls plugin load order
-- each plugin can receive its own configuration object
+- `priority` controls load order
+- each plugin can receive its own config object
 - public plugins cannot register official premium Core tasks
 
----
-
-## Plugin Documentation
-
-Read the plugin documentation here:
+Read the plugin docs here:
 
 - [Plugin system overview](docs/plugins.md)
 - [Create a plugin](docs/create-plugin.md)
@@ -130,18 +69,11 @@ Read the plugin documentation here:
 - [Auto-updates](docs/updates.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
----
-
 ## Documentation
 
-See the public documentation index:
-
-- [docs/README.md](docs/README.md)
-
----
+See [docs/README.md](docs/README.md) for the public docs index.
 
 ## License
 
 The open-source core is distributed under the PolyForm Noncommercial license.
-
 The built-in Core plugin remains proprietary and is shipped as compiled bytecode.
