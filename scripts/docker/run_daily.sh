@@ -145,7 +145,7 @@ fi
 
 # Start the actual script
 echo "[$(date)] [run_daily.sh] Starting script..."
-if npm start; then
+if node dist/index.js; then
     echo "[$(date)] [run_daily.sh] Script completed successfully."
 else
     echo "[$(date)] [run_daily.sh] ERROR: Script failed!" >&2

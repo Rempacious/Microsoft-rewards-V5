@@ -1,7 +1,7 @@
 ###############################################################################
 # Stage 1: Builder
 ###############################################################################
-FROM node:25-slim AS builder
+FROM node:24.15.0-slim AS builder
 
 WORKDIR /usr/src/microsoft-rewards-bot
 
@@ -29,7 +29,7 @@ RUN npx patchright install --with-deps --only-shell chromium \
 ###############################################################################
 # Stage 2: Runtime
 ###############################################################################
-FROM node:25-slim AS runtime
+FROM node:24.15.0-slim AS runtime
 
 WORKDIR /usr/src/microsoft-rewards-bot
 
@@ -74,10 +74,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libdouble-conversion3 \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
+# Install rimraf globally for runtime build support
+RUN npm install -g rimraf
+
 # Copy compiled application and dependencies from builder stage
 COPY --from=builder /usr/src/microsoft-rewards-bot/dist ./dist
 COPY --from=builder /usr/src/microsoft-rewards-bot/package*.json ./
 COPY --from=builder /usr/src/microsoft-rewards-bot/node_modules ./node_modules
+COPY --from=builder /usr/src/microsoft-rewards-bot/scripts ./scripts
 
 # Copy runtime scripts with proper permissions from the start
 COPY --chmod=755 scripts/docker/run_daily.sh ./scripts/docker/run_daily.sh
