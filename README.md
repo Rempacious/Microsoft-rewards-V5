@@ -50,33 +50,36 @@ The installer will download the latest Windows installer from the release branch
 ## Manual Installation
 
 1. Clone the repository.
-2. Install Node.js `24.15.0`.
-3. Install dependencies:
+   ```bash
+   git clone -b release https://github.com/QuestPilot/Microsoft-Rewards-Bot.git
+   ```
+3. Install Node.js `24.15.0`.
+4. Install dependencies:
 
    ```bash
    npm install
    ```
 
-4. Copy the example accounts file:
+5. Copy the example accounts file:
 
    ```bash
    cp src/accounts.example.json src/accounts.json
    ```
 
-5. Copy the example configuration file:
+6. Copy the example configuration file:
 
    ```bash
    cp src/config.example.json src/config.json
    ```
 
-6. Edit `plugins/plugins.jsonc` to enable or disable plugins.
-7. Optionally open the local Plugin Desk:
+7. Edit `plugins/plugins.jsonc` to enable or disable plugins.
+8. Optionally open the local Plugin Desk:
 
    ```bash
    npm run plugins
    ```
 
-8. Start the bot:
+9. Start the bot:
 
    ```bash
    npm start
