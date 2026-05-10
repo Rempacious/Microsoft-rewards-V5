@@ -29,7 +29,20 @@ Accepted payment methods for v1:
 
 Xbox and PlayStation gift cards are not accepted.
 
-After payment, you receive a license key. Enable the preinstalled Core plugin in `plugins/plugins.jsonc`, put the license in the documented Core config, and start the bot.
+After payment, you receive a license key. Enable the preinstalled Core plugin in `plugins/plugins.jsonc`, configure the Core license validation endpoint/public key, and start the bot.
+
+Example:
+
+```jsonc
+"core": {
+  "enabled": true,
+  "priority": 100,
+  "config": {
+    "licenseApiUrl": "https://rewards-bot.dev/api/licenses/validate",
+    "licensePublicKey": "<public RSA key PEM or base64>"
+  }
+}
+```
 
 ## Protection Boundary
 

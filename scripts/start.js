@@ -2,9 +2,10 @@ const childProcess = require('child_process')
 const { UpdateManager } = require('./updater/UpdateManager')
 
 function run(command, args) {
-    const result = childProcess.spawnSync(command, args, {
+    const executable = process.platform === 'win32' && command === 'npm' ? 'npm.cmd' : command
+    const result = childProcess.spawnSync(executable, args, {
         stdio: 'inherit',
-        shell: process.platform === 'win32'
+        shell: false
     })
 
     if (result.status !== 0) {

@@ -9,13 +9,23 @@ export class FingerprintManager {
 
     constructor(private bot: MicrosoftRewardsBot) {}
 
-    async getUserAgent(isMobile: boolean) {
+    async getUserAgent(isMobile: boolean, browser: 'chrome' | 'edge' = 'chrome') {
         const system = this.getSystemComponents(isMobile)
         const app = await this.getAppComponents(isMobile)
 
-        const uaTemplate = isMobile
-            ? `Mozilla/5.0 (${system}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${app.chrome_reduced_version} Mobile Safari/537.36 EdgA/${app.edge_version}`
-            : `Mozilla/5.0 (${system}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${app.chrome_reduced_version} Safari/537.36 Edg/${app.edge_version}`
+        const uaTemplate =
+            browser === 'edge'
+                ? isMobile
+                    ? `Mozilla/5.0 (${system}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${app.chrome_reduced_version} Mobile Safari/537.36 EdgA/${app.edge_version}`
+                    : `Mozilla/5.0 (${system}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${app.chrome_reduced_version} Safari/537.36 Edg/${app.edge_version}`
+                : isMobile
+                  ? `Mozilla/5.0 (${system}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${app.chrome_reduced_version} Mobile Safari/537.36`
+                  : `Mozilla/5.0 (${system}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${app.chrome_reduced_version} Safari/537.36`
+
+        const browserBrand =
+            browser === 'edge'
+                ? { name: 'Microsoft Edge', version: app.edge_version, major: app.edge_major_version }
+                : { name: 'Google Chrome', version: app.chrome_version, major: app.chrome_major_version }
 
         const platformVersion = `${isMobile ? Math.floor(Math.random() * 5) + 9 : Math.floor(Math.random() * 15) + 1}.0.0`
 
@@ -24,12 +34,12 @@ export class FingerprintManager {
             platform: isMobile ? 'Android' : 'Windows',
             fullVersionList: [
                 { brand: 'Not/A)Brand', version: `${FingerprintManager.NOT_A_BRAND_VERSION}.0.0.0` },
-                { brand: 'Microsoft Edge', version: app['edge_version'] },
+                { brand: browserBrand.name, version: browserBrand.version },
                 { brand: 'Chromium', version: app['chrome_version'] }
             ],
             brands: [
                 { brand: 'Not/A)Brand', version: FingerprintManager.NOT_A_BRAND_VERSION },
-                { brand: 'Microsoft Edge', version: app['edge_major_version'] },
+                { brand: browserBrand.name, version: browserBrand.major },
                 { brand: 'Chromium', version: app['chrome_major_version'] }
             ],
             platformVersion,
@@ -122,11 +132,16 @@ export class FingerprintManager {
 
     async updateFingerprintUserAgent(
         fingerprint: BrowserFingerprintWithHeaders,
-        isMobile: boolean
+        isMobile: boolean,
+        browser: 'chrome' | 'edge' = 'chrome'
     ): Promise<BrowserFingerprintWithHeaders> {
         try {
-            const userAgentData = await this.getUserAgent(isMobile)
+            const userAgentData = await this.getUserAgent(isMobile, browser)
             const componentData = await this.getAppComponents(isMobile)
+            const browserBrand =
+                browser === 'edge'
+                    ? { name: 'Microsoft Edge', version: componentData.edge_version, major: componentData.edge_major_version }
+                    : { name: 'Google Chrome', version: componentData.chrome_version, major: componentData.chrome_major_version }
 
             //@ts-expect-error Errors due it not exactly matching
             fingerprint.fingerprint.navigator.userAgentData = userAgentData.userAgentMetadata
@@ -138,9 +153,9 @@ export class FingerprintManager {
 
             fingerprint.headers['user-agent'] = userAgentData.userAgent
             fingerprint.headers['sec-ch-ua'] =
-                `"Microsoft Edge";v="${componentData.edge_major_version}", "Not=A?Brand";v="${componentData.not_a_brand_major_version}", "Chromium";v="${componentData.chrome_major_version}"`
+                `"${browserBrand.name}";v="${browserBrand.major}", "Not=A?Brand";v="${componentData.not_a_brand_major_version}", "Chromium";v="${componentData.chrome_major_version}"`
             fingerprint.headers['sec-ch-ua-full-version-list'] =
-                `"Microsoft Edge";v="${componentData.edge_version}", "Not=A?Brand";v="${componentData.not_a_brand_version}", "Chromium";v="${componentData.chrome_version}"`
+                `"${browserBrand.name}";v="${browserBrand.version}", "Not=A?Brand";v="${componentData.not_a_brand_version}", "Chromium";v="${componentData.chrome_version}"`
 
             /*
             Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36 EdgA/129.0.0.0

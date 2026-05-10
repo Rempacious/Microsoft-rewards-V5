@@ -15,6 +15,32 @@ export interface Config {
     webhook: ConfigWebhook
     redeemGoal?: ConfigRedeemGoal
     plugins?: ConfigPlugins
+    scheduler?: ConfigScheduler
+    safetyAdvisory?: ConfigSafetyAdvisory
+    dashboard?: ConfigDashboard
+}
+
+export interface ConfigDashboard {
+    enabled: boolean
+    host: string
+    port: number
+    openOnStart: boolean
+    allowConfigWrite: boolean
+}
+
+export interface ConfigScheduler {
+    enabled: boolean
+    runOnStartup: boolean
+    timezone: string
+    startTime: string
+    randomDelay: ConfigDelay
+}
+
+export interface ConfigSafetyAdvisory {
+    enabled: boolean
+    url: string
+    timeout: number | string
+    blockedBehavior: 'prompt' | 'continue' | 'stop'
 }
 
 export interface ConfigPlugins {

@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-4.0.0-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-4.0.1-blue?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/Node.js-24.15.0-green?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js">
   <img src="https://img.shields.io/badge/License-PolyForm_Noncommercial-orange?style=for-the-badge" alt="License">
 </p>
@@ -53,26 +53,27 @@ The installer will download the latest Windows installer from the release branch
    ```bash
    git clone -b release https://github.com/QuestPilot/Microsoft-Rewards-Bot.git
    ```
-3. Install Node.js `24.15.0`.
-4. Install dependencies:
+2. Install Node.js `24.15.0`.
+3. Install dependencies:
 
    ```bash
    npm install
    ```
 
-5. Copy the example accounts file:
+4. Copy the example accounts file:
 
    ```bash
    cp src/accounts.example.json src/accounts.json
    ```
 
-6. Copy the example configuration file:
+5. Copy the example configuration file:
 
    ```bash
    cp src/config.example.json src/config.json
    ```
 
-7. Edit `plugins/plugins.jsonc` to enable or disable plugins.
+6. Edit `plugins/plugins.jsonc` to enable or disable plugins.
+7. Optionally enable the local dashboard in `src/config.json`. See [docs/dashboard.md](docs/dashboard.md).
 8. Optionally open the local Plugin Desk:
 
    ```bash

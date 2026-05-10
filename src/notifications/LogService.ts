@@ -2,6 +2,7 @@ import chalk from 'chalk'
 import cluster from 'cluster'
 import { errorDiagnostic } from '../helpers/ErrorDiagnostic'
 import type { MicrosoftRewardsBot } from '../index'
+import type { DashboardPlatform } from '../types/Dashboard'
 import type { LogFilter } from '../types/Config'
 import { sendDiscord } from './DiscordWebhook'
 import { sendNtfy } from './NtfyWebhook'
@@ -16,7 +17,7 @@ export interface IpcLog {
 
 type ChalkFn = (msg: string) => string
 
-function platformText(platform: Platform): string {
+function platformText(platform: Platform): DashboardPlatform {
     return platform === 'main' ? 'MAIN' : platform ? 'MOBILE' : 'DESKTOP'
 }
 
@@ -83,6 +84,15 @@ export class LogService {
         if (level === 'debug' && !config.debugLogs && !process.argv.includes('-dev')) {
             return
         }
+
+        this.bot.pushDashboardLog({
+            time: new Date().toISOString(),
+            userName,
+            level,
+            platform: platformText(isMobile),
+            title,
+            message: formatted
+        })
 
         const badge = platformBadge(isMobile)
         const consoleStr = `[${now}] [${userName}] [${levelTag}] ${badge} [${title}] ${formatted}`

@@ -26,7 +26,15 @@
 
     "core": {
         "enabled": true,
-        "priority": 100
+        "priority": 100,
+        // The released Core plugin needs a license validation public key.
+        // You can also provide these values through MSRB_LICENSE_API_URL
+        // and MSRB_LICENSE_PUBLIC_KEY environment variables.
+        //
+        // "config": {
+        //   "licenseApiUrl": "https://rewards-bot.dev/api/licenses/validate",
+        //   "licensePublicKey": "<public RSA key PEM or base64>"
+        // }
     }
 
     // ───────────────────────────────────────────────────────────────

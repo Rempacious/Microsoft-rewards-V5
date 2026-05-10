@@ -129,6 +129,15 @@ export default class PageController {
      */
     async getAppDashboardData(): Promise<AppDashboardData> {
         try {
+            if (!this.bot.accessToken) {
+                this.bot.logger.warn(
+                    this.bot.isMobile,
+                    'GET-APP-DASHBOARD-DATA',
+                    'No mobile access token available, skipping app dashboard data'
+                )
+                return this.emptyAppDashboardData()
+            }
+
             const request: AxiosRequestConfig = {
                 url: 'https://prod.rewardsplatform.microsoft.com/dapi/me?channel=SAIOS&options=613',
                 method: 'GET',
@@ -147,7 +156,7 @@ export default class PageController {
                 'GET-APP-DASHBOARD-DATA',
                 `Error fetching dashboard data: ${error instanceof Error ? error.message : String(error)}`
             )
-            throw error
+            return this.emptyAppDashboardData()
         }
     }
 
@@ -263,6 +272,15 @@ export default class PageController {
      */
     async getAppEarnablePoints(): Promise<AppEarnablePoints> {
         try {
+            if (!this.bot.accessToken) {
+                this.bot.logger.warn(
+                    this.bot.isMobile,
+                    'GET-APP-EARNABLE-POINTS',
+                    'No mobile access token available, app-only points will be skipped'
+                )
+                return { readToEarn: 0, checkIn: 0, totalEarnablePoints: 0 }
+            }
+
             const eligibleOffers = ['ENUS_readarticle3_30points', 'Gamification_Sapphire_DailyCheckIn']
 
             const request: AxiosRequestConfig = {
@@ -317,7 +335,64 @@ export default class PageController {
                 'GET-APP-EARNABLE-POINTS',
                 `An error occurred: ${error instanceof Error ? error.message : String(error)}`
             )
-            throw error
+            return { readToEarn: 0, checkIn: 0, totalEarnablePoints: 0 }
+        }
+    }
+
+    private emptyAppDashboardData(): AppDashboardData {
+        return {
+            response: {
+                profile: {
+                    ruid: '',
+                    attributes: {
+                        ismsaautojoined: '',
+                        created: new Date(0),
+                        creative: '',
+                        publisher: '',
+                        program: '',
+                        country: '',
+                        target: '',
+                        epuid: '',
+                        level: '',
+                        level_upd: new Date(0),
+                        iris_segmentation: '',
+                        iris_segmentation_upd: new Date(0),
+                        waitlistattributes: '',
+                        waitlistattributes_upd: new Date(0)
+                    },
+                    offline_attributes: {}
+                },
+                balance: 0,
+                counters: null,
+                promotions: [],
+                catalog: null,
+                goal_item: {
+                    name: '',
+                    provider: '',
+                    price: 0,
+                    attributes: {} as AppDashboardData['response']['goal_item']['attributes'],
+                    config: { isHidden: 'true' }
+                },
+                activities: null,
+                cashback: null,
+                orders: [],
+                rebateProfile: null,
+                rebatePayouts: null,
+                giveProfile: null,
+                autoRedeemProfile: null,
+                autoRedeemItem: null,
+                thirdPartyProfile: null,
+                notifications: null,
+                waitlist: null,
+                autoOpenFlyout: null,
+                coupons: null,
+                recommendedAffordableCatalog: null,
+                generativeAICreditsBalance: null,
+                requestCountryCatalog: null,
+                donationCatalog: null
+            },
+            correlationId: '',
+            code: 0
         }
     }
     /**

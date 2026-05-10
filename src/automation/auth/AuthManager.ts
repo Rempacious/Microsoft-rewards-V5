@@ -336,6 +336,28 @@ export class AuthManager {
             .catch(() => false)
     }
 
+    private async clickUsePasswordOption(page: Page): Promise<boolean> {
+        for (const label of ['Use your password', 'Use my password']) {
+            const links = page.getByText(label, { exact: false })
+            const count = await links.count().catch(() => 0)
+
+            for (let i = 0; i < count; i++) {
+                const link = links.nth(i)
+                const visible = await link.isVisible().catch(() => false)
+                if (!visible) continue
+
+                this.bot.logger.info(this.bot.isMobile, 'LOGIN', `Selecting "${label}"`)
+                await link.click().catch(async () => {
+                    await this.bot.browser.utils.ghostClick(page, this.selectors.viewFooter)
+                })
+                await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {})
+                return true
+            }
+        }
+
+        return false
+    }
+
     private async handleState(state: LoginState, page: Page, account: Account): Promise<boolean> {
         this.bot.logger.debug(this.bot.isMobile, 'HANDLE-STATE', `Processing state: ${state}`)
 
@@ -383,6 +405,10 @@ export class AuthManager {
 
             case 'GET_A_CODE': {
                 this.bot.logger.info(this.bot.isMobile, 'LOGIN', 'Attempting to bypass "Get code" page')
+
+                if (await this.clickUsePasswordOption(page)) {
+                    return true
+                }
 
                 // First check: look for "Use your password" — a Fluent UI span[role="button"] OUTSIDE viewFooter
                 // Must use Playwright .click() (not native DOM .click()) because Fluent UI
@@ -652,7 +678,11 @@ export class AuthManager {
                     'OTP code entry page detected, attempting to find password option'
                 )
 
-                // My Fix: Click "Use your password" footer
+                if (await this.clickUsePasswordOption(page)) {
+                    return true
+                }
+
+                // Click "Use your password" footer if text lookup did not expose it
                 const footerLink = await page
                     .waitForSelector(this.selectors.viewFooter, { state: 'visible', timeout: 2000 })
                     .catch(() => null)

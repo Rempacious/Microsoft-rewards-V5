@@ -21,6 +21,8 @@ interface BrowserCreationResult {
     fingerprint: BrowserFingerprintWithHeaders
 }
 
+type BrowserChannel = 'chrome' | 'msedge'
+
 class BrowserManager {
     private readonly bot: MicrosoftRewardsBot
     private static readonly BROWSER_ARGS = [
@@ -59,11 +61,11 @@ class BrowserManager {
 
     /**
      * Attempts to find the best locally-installed Chromium-based browser.
-     * Preference: Microsoft Edge > Google Chrome > Patchright bundled Chromium.
-     * Edge is the most natural match for Microsoft services.
+     * Preference: Google Chrome > Microsoft Edge > Patchright bundled Chromium.
+     * Edge can block account.live.com on some Windows installations.
      */
-    private async detectBrowserChannel(): Promise<string | undefined> {
-        for (const channel of ['msedge', 'chrome'] as const) {
+    private async detectBrowserChannel(): Promise<BrowserChannel | undefined> {
+        for (const channel of ['chrome', 'msedge'] as const) {
             try {
                 const testBrowser = await rebrowser.chromium.launch({ headless: true, channel })
                 await testBrowser.close()
@@ -78,11 +80,12 @@ class BrowserManager {
 
     async createBrowser(account: Account): Promise<BrowserCreationResult> {
         let browser: rebrowser.Browser
+        let channel: BrowserChannel | undefined
         try {
             this.bot.logger.info(
                 this.bot.isMobile,
                 'BROWSER',
-                'Initializing browser — detecting available channel (Edge › Chrome › Chromium)...'
+                'Initializing browser — detecting available channel (Chrome › Edge › Chromium)...'
             )
 
             const proxyConfig = account.proxy.url
@@ -96,7 +99,7 @@ class BrowserManager {
                   }
                 : undefined
 
-            const channel = await this.detectBrowserChannel()
+            channel = await this.detectBrowserChannel()
             this.bot.logger.info(
                 this.bot.isMobile,
                 'BROWSER',
@@ -123,7 +126,9 @@ class BrowserManager {
                 this.bot.isMobile
             )
 
-            const fingerprint = sessionData.fingerprint ?? (await this.generateFingerprint(this.bot.isMobile))
+            const fingerprint =
+                sessionData.fingerprint ??
+                (await this.generateFingerprint(this.bot.isMobile, channel === 'msedge' ? 'edge' : 'chrome'))
 
             const context = await newInjectedContext(browser as any, { fingerprint })
 
@@ -205,15 +210,19 @@ class BrowserManager {
         }
     }
 
-    async generateFingerprint(isMobile: boolean) {
+    async generateFingerprint(isMobile: boolean, browser: 'chrome' | 'edge' = 'chrome') {
         const fingerPrintData = new FingerprintGenerator().getFingerprint({
             devices: isMobile ? ['mobile'] : ['desktop'],
             operatingSystems: isMobile ? ['android', 'ios'] : ['windows', 'linux'],
-            browsers: [{ name: 'edge' }]
+            browsers: [{ name: browser }]
         })
 
         const userAgentManager = new FingerprintManager(this.bot)
-        const updatedFingerPrintData = await userAgentManager.updateFingerprintUserAgent(fingerPrintData, isMobile)
+        const updatedFingerPrintData = await userAgentManager.updateFingerprintUserAgent(
+            fingerPrintData,
+            isMobile,
+            browser
+        )
 
         return updatedFingerPrintData
     }

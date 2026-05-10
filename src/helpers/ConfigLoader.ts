@@ -9,6 +9,27 @@ import { validateAccounts, validateConfig } from './SchemaValidator'
 
 let configCache: Config
 
+function getSessionDir(sessionPath: string, email: string): string {
+    return path.resolve(process.cwd(), sessionPath, email)
+}
+
+function getLegacySessionDir(sessionPath: string, email: string): string {
+    return path.join(__dirname, '../automation/', sessionPath, email)
+}
+
+function resolveSessionFile(sessionPath: string, email: string, fileName: string): string {
+    const primary = path.join(getSessionDir(sessionPath, email), fileName)
+    if (fs.existsSync(primary)) return primary
+
+    const legacy = path.join(getLegacySessionDir(sessionPath, email), fileName)
+    if (fs.existsSync(legacy)) {
+        console.warn(`[CONFIG] Using legacy session data from ${path.relative(process.cwd(), legacy)}`)
+        return legacy
+    }
+
+    return primary
+}
+
 function resolveFirstExistingFile(candidates: string[], label: string): string {
     const primaryCandidate = candidates[0]
 
@@ -78,7 +99,7 @@ export async function loadSessionData(
 ) {
     try {
         const cookiesFileName = isMobile ? 'session_mobile.json' : 'session_desktop.json'
-        const cookieFile = path.join(__dirname, '../automation/', sessionPath, email, cookiesFileName)
+        const cookieFile = resolveSessionFile(sessionPath, email, cookiesFileName)
 
         let cookies: Cookie[] = []
         if (fs.existsSync(cookieFile)) {
@@ -87,7 +108,7 @@ export async function loadSessionData(
         }
 
         const fingerprintFileName = isMobile ? 'session_fingerprint_mobile.json' : 'session_fingerprint_desktop.json'
-        const fingerprintFile = path.join(__dirname, '../automation/', sessionPath, email, fingerprintFileName)
+        const fingerprintFile = resolveSessionFile(sessionPath, email, fingerprintFileName)
 
         let fingerprint!: BrowserFingerprintWithHeaders
         const shouldLoadFingerprint = isMobile ? saveFingerprint.mobile : saveFingerprint.desktop
@@ -98,7 +119,7 @@ export async function loadSessionData(
 
         // Load localStorage/sessionStorage data
         const storageFileName = isMobile ? 'session_storage_mobile.json' : 'session_storage_desktop.json'
-        const storageFile = path.join(__dirname, '../automation/', sessionPath, email, storageFileName)
+        const storageFile = resolveSessionFile(sessionPath, email, storageFileName)
 
         let storageState: StorageOrigin[] | undefined
         if (fs.existsSync(storageFile)) {
@@ -123,7 +144,7 @@ export async function saveSessionData(
     isMobile: boolean
 ): Promise<string> {
     try {
-        const sessionDir = path.join(__dirname, '../automation/', sessionPath, email)
+        const sessionDir = getSessionDir(sessionPath, email)
         const cookiesFileName = isMobile ? 'session_mobile.json' : 'session_desktop.json'
 
         if (!fs.existsSync(sessionDir)) {
@@ -145,7 +166,7 @@ export async function saveFingerprintData(
     fingerpint: BrowserFingerprintWithHeaders
 ): Promise<string> {
     try {
-        const sessionDir = path.join(__dirname, '../automation/', sessionPath, email)
+        const sessionDir = getSessionDir(sessionPath, email)
         const fingerprintFileName = isMobile ? 'session_fingerprint_mobile.json' : 'session_fingerprint_desktop.json'
 
         if (!fs.existsSync(sessionDir)) {
@@ -167,7 +188,7 @@ export async function saveStorageState(
     isMobile: boolean
 ): Promise<void> {
     try {
-        const sessionDir = path.join(__dirname, '../automation/', sessionPath, email)
+        const sessionDir = getSessionDir(sessionPath, email)
         const storageFileName = isMobile ? 'session_storage_mobile.json' : 'session_storage_desktop.json'
 
         if (!fs.existsSync(sessionDir)) {

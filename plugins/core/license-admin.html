@@ -1,0 +1,1171 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MSRB Core License Desk</title>
+  <script src="./license-admin.config.local.js"></script>
+  <style>
+    :root {
+      --ink: #eef4ff;
+      --muted: #94a3b8;
+      --paper: #070b12;
+      --panel: #0e1624;
+      --panel-2: #131d2e;
+      --line: #263448;
+      --accent: #2dd4bf;
+      --accent-2: #fb7185;
+      --accent-3: #8ab4ff;
+      --good: #34d399;
+      --bad: #fb7185;
+      --warn: #fbbf24;
+      --shadow: 0 24px 80px rgba(0, 0, 0, .42);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 18% 8%, rgba(45,212,191,.14), transparent 28%),
+        radial-gradient(circle at 88% 18%, rgba(138,180,255,.11), transparent 30%),
+        linear-gradient(90deg, rgba(148,163,184,.055) 1px, transparent 1px) 0 0 / 48px 48px,
+        linear-gradient(rgba(148,163,184,.05) 1px, transparent 1px) 0 0 / 48px 48px,
+        var(--paper);
+      color: var(--ink);
+      font-family: "Segoe UI", "Aptos", system-ui, sans-serif;
+      font-size: 14px;
+    }
+
+    header {
+      padding: 26px 28px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(7, 11, 18, .84);
+      backdrop-filter: blur(18px);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .topbar {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    .brand {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      min-width: 260px;
+    }
+
+    .mark {
+      width: 46px;
+      height: 46px;
+      border: 2px solid var(--ink);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #2dd4bf, #8ab4ff);
+      color: #071018;
+      box-shadow: 5px 5px 0 rgba(45,212,191,.22);
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .connection {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 32px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(19,29,46,.72);
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--warn);
+    }
+
+    .dot.ok { background: var(--good); }
+    .dot.bad { background: var(--bad); }
+
+    main {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 24px 28px 34px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .metric,
+    .panel {
+      background: rgba(14,22,36,.90);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric {
+      padding: 16px;
+      min-height: 98px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric::after {
+      content: "";
+      position: absolute;
+      width: 74px;
+      height: 74px;
+      right: -20px;
+      bottom: -20px;
+      border: 12px solid rgba(45,212,191,.10);
+      transform: rotate(12deg);
+    }
+
+    .metric b {
+      display: block;
+      font-size: 30px;
+      line-height: 1.1;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 16px;
+    }
+
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid #31435d;
+      border-radius: 10px;
+      background: #0a111d;
+      color: var(--ink);
+      padding: 9px 11px;
+      font: inherit;
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(11,111,106,.14);
+    }
+
+    textarea {
+      min-height: 76px;
+      resize: vertical;
+    }
+
+    button {
+      min-height: 40px;
+      border: 1px solid #3d5575;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #14b8a6, #2563eb);
+      color: #f8fbff;
+      padding: 8px 12px;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 3px 3px 0 rgba(16,19,26,.18);
+    }
+
+    button:hover { transform: translate(-1px, -1px); }
+
+    button.secondary {
+      background: #121d2d;
+      color: var(--ink);
+    }
+
+    button.danger {
+      background: var(--accent-2);
+      color: #fff;
+    }
+
+    button.linkish {
+      min-height: 32px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--accent-3);
+      box-shadow: none;
+      padding: 5px 7px;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .row > * { flex: 1 1 auto; }
+    .row button { flex: 0 0 auto; }
+
+    details {
+      border: 1px dashed #344966;
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: rgba(10,17,29,.65);
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 900;
+      color: var(--accent-3);
+    }
+
+    .hint {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .status {
+      min-height: 28px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .status.ok { color: var(--good); }
+    .status.bad { color: var(--bad); }
+    .status.warn { color: var(--warn); }
+
+    .list-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .searchbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 130px 130px auto;
+      gap: 8px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #0a111d;
+    }
+
+    table {
+      width: 100%;
+      min-width: 1080px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      border-bottom: 1px solid #21324a;
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #172235;
+      color: #cbd5e1;
+      font-size: 11px;
+      text-transform: uppercase;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:hover td { background: #101b2b; }
+
+    .key {
+      font-family: "Cascadia Mono", Consolas, monospace;
+      font-size: 13px;
+      letter-spacing: .01em;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .badge.active {
+      background: #dcfce7;
+      color: #12613f;
+    }
+
+    .badge.inactive {
+      background: #fee2e2;
+      color: #8d2018;
+    }
+
+    .empty {
+      padding: 26px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(3, 7, 18, .76);
+      z-index: 20;
+      padding: 18px;
+    }
+
+    .modal-backdrop.show { display: grid; }
+
+    .modal {
+      width: min(860px, 100%);
+      max-height: 92vh;
+      overflow: auto;
+      background: #0e1624;
+      border: 1px solid #344966;
+      border-radius: 18px;
+      box-shadow: 0 30px 120px rgba(0,0,0,.58);
+      padding: 18px;
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .modal-grid .wide { grid-column: 1 / -1; }
+
+    .inline-field {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 980px) {
+      header { position: static; }
+      .topbar, .list-head { align-items: stretch; flex-direction: column; display: flex; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .layout { grid-template-columns: 1fr; }
+      .searchbar { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      main, header { padding-left: 14px; padding-right: 14px; }
+      .metrics { grid-template-columns: 1fr; }
+      .brand { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <div class="mark">MS</div>
+        <div>
+          <h1>Core License Desk</h1>
+          <div class="subtitle">Local Turso control room for Microsoft Rewards Bot Core.</div>
+        </div>
+      </div>
+      <div class="connection">
+        <span class="pill"><span id="connDot" class="dot"></span><span id="connText">Not connected</span></span>
+        <button id="refresh" class="secondary" type="button">Refresh</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="metrics">
+      <div class="metric"><span>Total</span><b id="metricTotal">0</b></div>
+      <div class="metric"><span>Active</span><b id="metricActive">0</b></div>
+      <div class="metric"><span>Lifetime</span><b id="metricLifetime">0</b></div>
+      <div class="metric"><span>Expiring</span><b id="metricExpiring">0</b></div>
+    </div>
+
+    <div class="layout">
+      <section class="panel">
+        <h2>Create license</h2>
+        <div class="stack">
+          <div>
+            <label for="newKey">License key</label>
+            <div class="row">
+              <input id="newKey" class="key" placeholder="MSRB-XXXX-XXXX-XXXX-XXXX">
+              <button id="generateKey" class="secondary" type="button">Generate</button>
+            </div>
+          </div>
+          <div>
+            <label for="newEmail">Customer email</label>
+            <input id="newEmail" type="email" placeholder="customer@example.com">
+          </div>
+          <div class="row">
+            <div>
+              <label for="newPlan">Plan</label>
+              <input id="newPlan" value="premium">
+            </div>
+            <div>
+              <label for="newMax">Machines</label>
+              <input id="newMax" type="number" min="1" value="1">
+            </div>
+          </div>
+          <div>
+            <label for="newExpires">Expiration</label>
+            <input id="newExpires" type="date">
+            <p class="hint">Leave empty for a lifetime license.</p>
+          </div>
+          <div>
+            <label for="newNotes">Notes</label>
+            <textarea id="newNotes" placeholder="Private note for this license"></textarea>
+          </div>
+          <button id="createLicense" type="button">Create license</button>
+          <details id="settingsDetails">
+            <summary>Connection settings</summary>
+            <div class="settings-grid">
+              <div>
+                <label for="orgSlug">Turso organization</label>
+                <input id="orgSlug" placeholder="lightzirconite">
+              </div>
+              <div>
+                <label for="dbName">Database name</label>
+                <input id="dbName" placeholder="microsoft-rewards-bot">
+              </div>
+              <div>
+                <label for="platformToken">Turso platform token</label>
+                <input id="platformToken" type="password" autocomplete="off">
+              </div>
+              <div>
+                <label for="dbUrl">Database URL override</label>
+                <input id="dbUrl" placeholder="libsql://... or https://...">
+              </div>
+              <div>
+                <label for="dbToken">Database token override</label>
+                <input id="dbToken" type="password" autocomplete="off">
+              </div>
+              <div class="row">
+                <button id="saveSettings" type="button">Save locally</button>
+                <button id="testConnection" class="secondary" type="button">Test</button>
+                <button id="clearSettings" class="secondary" type="button">Forget</button>
+              </div>
+              <p class="hint">Permanent local setup: keep <b>license-admin.config.local.js</b> next to this HTML in this private Core repository.</p>
+            </div>
+          </details>
+          <div id="status" class="status">Ready.</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="list-head">
+          <h2>Licenses</h2>
+          <div class="searchbar">
+            <input id="search" placeholder="Search key, email, notes">
+            <select id="stateFilter">
+              <option value="all">All states</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+            <select id="expiryFilter">
+              <option value="all">All expiry</option>
+              <option value="lifetime">Lifetime</option>
+              <option value="expiring">Expiring 30d</option>
+              <option value="expired">Expired</option>
+            </select>
+            <button id="copyInsertSql" class="secondary" type="button">Copy SQL</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>License</th>
+                <th>Email</th>
+                <th>Plan</th>
+                <th>Status</th>
+                <th>Machines</th>
+                <th>Expires</th>
+                <th>Last check</th>
+                <th>Notes</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="licensesBody">
+              <tr><td class="empty" colspan="9">No data loaded yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="editModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+      <div class="modal-head">
+        <div>
+          <p class="eyebrow">License editor</p>
+          <h2 id="editTitle">Edit license</h2>
+        </div>
+        <button id="closeEdit" class="secondary" type="button">Close</button>
+      </div>
+      <input id="editId" type="hidden">
+      <div class="modal-grid">
+        <div>
+          <label for="editKey">License key</label>
+          <div class="inline-field">
+            <input id="editKey" autocomplete="off">
+            <button id="generateEditKey" class="secondary" type="button">Generate</button>
+          </div>
+        </div>
+        <div>
+          <label for="editEmail">Customer email</label>
+          <input id="editEmail" type="email" autocomplete="off">
+        </div>
+        <div>
+          <label for="editPlan">Plan</label>
+          <input id="editPlan" list="planOptions" autocomplete="off">
+        </div>
+        <div>
+          <label for="editMax">Machines</label>
+          <input id="editMax" type="number" min="1" step="1">
+        </div>
+        <div>
+          <label for="editExpires">Expiration</label>
+          <input id="editExpires" type="date">
+        </div>
+        <div>
+          <label for="editActive">Status</label>
+          <select id="editActive">
+            <option value="1">Active</option>
+            <option value="0">Inactive</option>
+          </select>
+        </div>
+        <div class="wide">
+          <label for="editNotes">Notes</label>
+          <textarea id="editNotes" rows="4" placeholder="Internal notes, customer context, payment info, support details..."></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="saveEdit" type="button">Save changes</button>
+        <button id="cancelEdit" class="secondary" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const storageKey = 'msrb-license-desk-settings'
+    const chars = '23456789ABCDEFGHJMNPQRSTUVWXYZ'
+    const externalConfig = window.MSRB_LICENSE_ADMIN_CONFIG || {}
+    let settings = {}
+    let dbTokenCache = ''
+    let dbUrlCache = ''
+    let licenses = []
+
+    const el = id => document.getElementById(id)
+    const fields = {
+      connDot: el('connDot'),
+      connText: el('connText'),
+      status: el('status'),
+      body: el('licensesBody'),
+      search: el('search'),
+      stateFilter: el('stateFilter'),
+      expiryFilter: el('expiryFilter'),
+      orgSlug: el('orgSlug'),
+      dbName: el('dbName'),
+      platformToken: el('platformToken'),
+      dbUrl: el('dbUrl'),
+      dbToken: el('dbToken'),
+      newKey: el('newKey'),
+      newEmail: el('newEmail'),
+      newPlan: el('newPlan'),
+      newMax: el('newMax'),
+      newExpires: el('newExpires'),
+      newNotes: el('newNotes'),
+      metricTotal: el('metricTotal'),
+      metricActive: el('metricActive'),
+      metricLifetime: el('metricLifetime'),
+      metricExpiring: el('metricExpiring'),
+      editModal: el('editModal'),
+      editId: el('editId'),
+      editKey: el('editKey'),
+      editEmail: el('editEmail'),
+      editPlan: el('editPlan'),
+      editMax: el('editMax'),
+      editExpires: el('editExpires'),
+      editActive: el('editActive'),
+      editNotes: el('editNotes')
+    }
+
+    boot()
+
+    async function boot() {
+      loadSettings()
+      bindEvents()
+      applySettingsToForm()
+      if (hasConnectionHints()) {
+        await refreshLicenses()
+      } else {
+        render()
+      }
+    }
+
+    function bindEvents() {
+      el('refresh').addEventListener('click', refreshLicenses)
+      el('generateKey').addEventListener('click', () => { fields.newKey.value = generateLicenseKey() })
+      el('createLicense').addEventListener('click', createLicense)
+      el('saveSettings').addEventListener('click', saveSettingsFromForm)
+      el('clearSettings').addEventListener('click', clearSettings)
+      el('testConnection').addEventListener('click', testConnection)
+      el('copyInsertSql').addEventListener('click', copyInsertSql)
+      el('closeEdit').addEventListener('click', closeEditModal)
+      el('cancelEdit').addEventListener('click', closeEditModal)
+      el('saveEdit').addEventListener('click', saveEditLicense)
+      el('generateEditKey').addEventListener('click', () => { fields.editKey.value = generateLicenseKey() })
+      fields.editModal.addEventListener('click', event => {
+        if (event.target === fields.editModal) closeEditModal()
+      })
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && fields.editModal.classList.contains('show')) closeEditModal()
+      })
+      fields.search.addEventListener('input', render)
+      fields.stateFilter.addEventListener('change', render)
+      fields.expiryFilter.addEventListener('change', render)
+
+      fields.body.addEventListener('click', async event => {
+        const button = event.target.closest('button[data-action]')
+        if (!button) return
+        const key = button.dataset.key
+        const id = button.dataset.id
+        const action = button.dataset.action
+
+        if (action === 'toggle') await setActive(key, button.dataset.active === '0' ? 1 : 0)
+        if (action === 'delete' && confirm('Delete this license permanently?')) await deleteLicense(key)
+        if (action === 'edit') {
+          const license = licenses.find(item => String(item.id) === String(id)) || licenses.find(item => item.license_key === key)
+          if (license) openEditModal(license)
+        }
+      })
+    }
+
+    function loadSettings() {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || '{}')
+      settings = {
+        organizationSlug: 'lightzirconite',
+        databaseName: 'microsoft-rewards-bot',
+        platformToken: '',
+        databaseUrl: '',
+        databaseToken: '',
+        ...saved,
+        ...externalConfig
+      }
+    }
+
+    function applySettingsToForm() {
+      fields.orgSlug.value = settings.organizationSlug || ''
+      fields.dbName.value = settings.databaseName || ''
+      fields.platformToken.value = settings.platformToken || ''
+      fields.dbUrl.value = settings.databaseUrl || ''
+      fields.dbToken.value = settings.databaseToken || ''
+      updateConnectionState('warn', hasConnectionHints() ? 'Ready to connect' : 'Missing connection')
+    }
+
+    function saveSettingsFromForm() {
+      settings = readSettingsFromForm()
+      localStorage.setItem(storageKey, JSON.stringify(settings))
+      setStatus('Connection settings saved in this browser.', 'ok')
+      updateConnectionState('warn', 'Saved locally')
+    }
+
+    function clearSettings() {
+      localStorage.removeItem(storageKey)
+      settings = { organizationSlug: 'lightzirconite', databaseName: 'microsoft-rewards-bot' }
+      dbTokenCache = ''
+      dbUrlCache = ''
+      applySettingsToForm()
+      setStatus('Local settings removed.', 'warn')
+    }
+
+    function readSettingsFromForm() {
+      return {
+        organizationSlug: fields.orgSlug.value.trim(),
+        databaseName: fields.dbName.value.trim(),
+        platformToken: fields.platformToken.value.trim(),
+        databaseUrl: fields.dbUrl.value.trim(),
+        databaseToken: fields.dbToken.value.trim()
+      }
+    }
+
+    function hasConnectionHints() {
+      if (usesLocalApi()) return true
+      return Boolean(
+        (settings.databaseUrl && settings.databaseToken) ||
+        (settings.organizationSlug && settings.databaseName && settings.platformToken)
+      )
+    }
+
+    async function resolveDatabaseConnection() {
+      if (usesLocalApi()) {
+        updateConnectionState('ok', 'Local admin server')
+        return
+      }
+
+      settings = readSettingsFromForm()
+      if (settings.databaseUrl && settings.databaseToken) {
+        dbUrlCache = normalizeDbUrl(settings.databaseUrl)
+        dbTokenCache = settings.databaseToken
+        return
+      }
+
+      if (!settings.organizationSlug || !settings.databaseName || !settings.platformToken) {
+        throw new Error('Connection is not configured.')
+      }
+
+      const base = `https://api.turso.tech/v1/organizations/${encodeURIComponent(settings.organizationSlug)}/databases/${encodeURIComponent(settings.databaseName)}`
+      const dbResponse = await tursoPlatformFetch(base)
+      const database = dbResponse.database || dbResponse
+      const hostname = database.hostname || database.Hostname
+      if (!hostname) throw new Error('Could not resolve Turso database hostname.')
+
+      const tokenResponse = await tursoPlatformFetch(`${base}/auth/tokens`, {
+        method: 'POST',
+        body: JSON.stringify({ authorization: 'full-access' })
+      })
+      const token = tokenResponse.jwt || tokenResponse.token
+      if (!token) throw new Error('Could not create a Turso database token.')
+
+      dbUrlCache = `https://${hostname}`
+      dbTokenCache = token
+    }
+
+    async function tursoPlatformFetch(url, options = {}) {
+      const response = await fetch(url, {
+        method: options.method || 'GET',
+        headers: {
+          authorization: `Bearer ${settings.platformToken}`,
+          'content-type': 'application/json'
+        },
+        body: options.body
+      })
+      const payload = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(payload?.error || payload?.message || `Turso API ${response.status}`)
+      return payload
+    }
+
+    async function query(sql, args = []) {
+      if (usesLocalApi()) {
+        const response = await fetch('/api/query', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ sql, args })
+        })
+        const payload = await response.json().catch(() => null)
+        if (!response.ok) throw new Error(payload?.error || `Local API ${response.status}`)
+        return payload.result || { cols: [], rows: [] }
+      }
+
+      if (!dbUrlCache || !dbTokenCache) await resolveDatabaseConnection()
+      const response = await fetch(`${dbUrlCache.replace(/\/+$/, '')}/v2/pipeline`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${dbTokenCache}`,
+          'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+          requests: [
+            { type: 'execute', stmt: { sql, args: args.map(toArg) } },
+            { type: 'close' }
+          ]
+        })
+      })
+      const payload = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(payload?.message || payload?.error || `Turso SQL ${response.status}`)
+      const result = payload?.results?.[0]
+      if (result?.type === 'error') throw new Error(result.error?.message || 'SQL error')
+      return result?.response?.result || result?.result || { cols: [], rows: [] }
+    }
+
+    function toArg(value) {
+      if (value === null || value === undefined || value === '') return { type: 'null' }
+      if (typeof value === 'number') return { type: 'integer', value: String(value) }
+      return { type: 'text', value: String(value) }
+    }
+
+    function fromValue(value) {
+      if (value === null || value === undefined) return null
+      if (typeof value !== 'object') return value
+      if (value.type === 'null') return null
+      if ('value' in value) return value.value
+      if ('base64' in value) return value.base64
+      return null
+    }
+
+    function rowsToObjects(result) {
+      const cols = (result.cols || []).map(col => col.name || col)
+      return (result.rows || []).map(row => {
+        const item = {}
+        row.forEach((value, index) => { item[cols[index]] = fromValue(value) })
+        return item
+      })
+    }
+
+    async function testConnection() {
+      try {
+        setStatus('Testing Turso connection...', 'warn')
+        dbUrlCache = ''
+        dbTokenCache = ''
+        await query('SELECT 1 AS ok')
+        updateConnectionState('ok', `${settings.databaseName || 'Database'} connected`)
+        setStatus('Turso connection is working.', 'ok')
+      } catch (error) {
+        updateConnectionState('bad', 'Connection failed')
+        setStatus(error.message, 'bad')
+      }
+    }
+
+    async function refreshLicenses() {
+      try {
+        setStatus('Loading licenses...', 'warn')
+        const result = await query(`
+          SELECT id, license_key, user_email, created_at, expires_at, is_active,
+                 plan_type, max_activations, last_validated, notes
+          FROM licenses
+          ORDER BY created_at DESC
+        `)
+        licenses = rowsToObjects(result)
+        updateConnectionState('ok', `${settings.databaseName || 'Database'} connected`)
+        render()
+        setStatus(`${licenses.length} license(s) loaded.`, 'ok')
+      } catch (error) {
+        updateConnectionState('bad', 'Connection failed')
+        render()
+        setStatus(error.message, 'bad')
+      }
+    }
+
+    async function createLicense() {
+      try {
+        const key = fields.newKey.value.trim().toUpperCase()
+        const email = fields.newEmail.value.trim()
+        const plan = fields.newPlan.value.trim() || 'premium'
+        const max = Number(fields.newMax.value || 1)
+        const expires = fields.newExpires.value ? `${fields.newExpires.value}T23:59:59` : null
+        const notes = fields.newNotes.value.trim() || null
+
+        if (!/^MSRB-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$/.test(key)) throw new Error('Invalid license key format.')
+        if (!email) throw new Error('Customer email is required.')
+        if (!Number.isInteger(max) || max < 1) throw new Error('Machine count must be at least 1.')
+
+        await query(`
+          INSERT INTO licenses (
+            id, license_key, user_email, plan_type, max_activations,
+            is_active, expires_at, notes
+          ) VALUES (?, ?, ?, ?, ?, 1, ?, ?)
+        `, [`lic_${randomHex(16)}`, key, email, plan, max, expires, notes])
+
+        fields.newKey.value = ''
+        fields.newEmail.value = ''
+        fields.newExpires.value = ''
+        fields.newNotes.value = ''
+        await refreshLicenses()
+        setStatus('License created.', 'ok')
+      } catch (error) {
+        setStatus(error.message, 'bad')
+      }
+    }
+
+    async function setActive(key, active) {
+      try {
+        await query('UPDATE licenses SET is_active = ? WHERE license_key = ?', [active, key])
+        await refreshLicenses()
+        setStatus(active ? 'License reactivated.' : 'License disabled.', 'ok')
+      } catch (error) {
+        setStatus(error.message, 'bad')
+      }
+    }
+
+    async function deleteLicense(key) {
+      try {
+        await query('DELETE FROM licenses WHERE license_key = ?', [key])
+        await refreshLicenses()
+        setStatus('License deleted.', 'ok')
+      } catch (error) {
+        setStatus(error.message, 'bad')
+      }
+    }
+
+    function openEditModal(license) {
+      fields.editId.value = license.id || ''
+      fields.editKey.value = license.license_key || ''
+      fields.editEmail.value = license.user_email || ''
+      fields.editPlan.value = license.plan_type || 'premium'
+      fields.editMax.value = license.max_activations || 1
+      fields.editExpires.value = toDateInput(license.expires_at)
+      fields.editActive.value = Number(license.is_active) === 1 ? '1' : '0'
+      fields.editNotes.value = license.notes || ''
+      fields.editModal.classList.add('show')
+      fields.editModal.setAttribute('aria-hidden', 'false')
+      fields.editKey.focus()
+    }
+
+    function closeEditModal() {
+      fields.editModal.classList.remove('show')
+      fields.editModal.setAttribute('aria-hidden', 'true')
+    }
+
+    async function saveEditLicense() {
+      try {
+        const id = fields.editId.value.trim()
+        const key = fields.editKey.value.trim().toUpperCase()
+        const email = fields.editEmail.value.trim()
+        const plan = fields.editPlan.value.trim() || 'premium'
+        const maxNumber = Number(fields.editMax.value || 1)
+        const active = Number(fields.editActive.value) === 1 ? 1 : 0
+        const normalizedExpires = fields.editExpires.value ? `${fields.editExpires.value}T23:59:59` : null
+        const notes = fields.editNotes.value.trim() || null
+
+        if (!id) throw new Error('Missing license id.')
+        if (!/^MSRB-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$/.test(key)) throw new Error('Invalid license key format.')
+        if (!email) throw new Error('Customer email is required.')
+        if (!Number.isInteger(maxNumber) || maxNumber < 1) throw new Error('Invalid machine count.')
+
+        await query(`
+          UPDATE licenses
+          SET license_key = ?, user_email = ?, plan_type = ?, max_activations = ?,
+              is_active = ?, expires_at = ?, notes = ?
+          WHERE id = ?
+        `, [
+          key,
+          email,
+          plan,
+          maxNumber,
+          active,
+          normalizedExpires,
+          notes,
+          id
+        ])
+        closeEditModal()
+        await refreshLicenses()
+        setStatus('License updated.', 'ok')
+      } catch (error) {
+        setStatus(error.message, 'bad')
+      }
+    }
+
+    function render() {
+      const now = Date.now()
+      const in30 = now + 30 * 24 * 60 * 60 * 1000
+      const total = licenses.length
+      const active = licenses.filter(item => Number(item.is_active) === 1).length
+      const lifetime = licenses.filter(item => !item.expires_at).length
+      const expiring = licenses.filter(item => item.expires_at && Date.parse(item.expires_at) <= in30 && Date.parse(item.expires_at) >= now).length
+      fields.metricTotal.textContent = total
+      fields.metricActive.textContent = active
+      fields.metricLifetime.textContent = lifetime
+      fields.metricExpiring.textContent = expiring
+
+      const visible = licenses.filter(item => {
+        const term = fields.search.value.trim().toLowerCase()
+        const state = fields.stateFilter.value
+        const expiry = fields.expiryFilter.value
+        const expiresAt = item.expires_at ? Date.parse(item.expires_at) : null
+        const textMatch = !term || [item.license_key, item.user_email, item.plan_type, item.notes].some(value => String(value || '').toLowerCase().includes(term))
+        const stateMatch = state === 'all' || (state === 'active' ? Number(item.is_active) === 1 : Number(item.is_active) !== 1)
+        const expiryMatch =
+          expiry === 'all' ||
+          (expiry === 'lifetime' && !item.expires_at) ||
+          (expiry === 'expired' && expiresAt && expiresAt < now) ||
+          (expiry === 'expiring' && expiresAt && expiresAt >= now && expiresAt <= in30)
+        return textMatch && stateMatch && expiryMatch
+      })
+
+      if (!visible.length) {
+        fields.body.innerHTML = '<tr><td class="empty" colspan="9">No licenses match the current view.</td></tr>'
+        return
+      }
+
+      fields.body.innerHTML = visible.map(item => `
+        <tr>
+          <td class="key">${escapeHtml(item.license_key)}</td>
+          <td>${escapeHtml(item.user_email)}</td>
+          <td>${escapeHtml(item.plan_type)}</td>
+          <td>${Number(item.is_active) === 1 ? '<span class="badge active">active</span>' : '<span class="badge inactive">inactive</span>'}</td>
+          <td>${escapeHtml(item.max_activations)}</td>
+          <td>${escapeHtml(formatDate(item.expires_at))}</td>
+          <td>${escapeHtml(formatDate(item.last_validated))}</td>
+          <td>${escapeHtml(item.notes || '')}</td>
+          <td>
+            <button class="linkish" type="button" data-action="edit" data-id="${escapeAttr(item.id)}" data-key="${escapeAttr(item.license_key)}">Edit</button>
+            <button class="linkish" type="button" data-action="toggle" data-active="${Number(item.is_active)}" data-id="${escapeAttr(item.id)}" data-key="${escapeAttr(item.license_key)}">${Number(item.is_active) === 1 ? 'Disable' : 'Enable'}</button>
+            <button class="linkish" type="button" data-action="delete" data-id="${escapeAttr(item.id)}" data-key="${escapeAttr(item.license_key)}">Delete</button>
+          </td>
+        </tr>
+      `).join('')
+    }
+
+    async function copyInsertSql() {
+      const key = fields.newKey.value.trim().toUpperCase() || generateLicenseKey()
+      const email = fields.newEmail.value.trim() || 'customer@example.com'
+      const plan = fields.newPlan.value.trim() || 'premium'
+      const max = Number(fields.newMax.value || 1)
+      const expires = fields.newExpires.value ? `'${fields.newExpires.value}T23:59:59'` : 'NULL'
+      const notes = (fields.newNotes.value.trim() || 'Created from License Desk').replace(/'/g, "''")
+      const sql = `INSERT INTO licenses (id, license_key, user_email, plan_type, max_activations, is_active, expires_at, notes) VALUES ('lic_' || lower(hex(randomblob(8))), '${key}', '${email.replace(/'/g, "''")}', '${plan.replace(/'/g, "''")}', ${max}, 1, ${expires}, '${notes}');`
+      await navigator.clipboard.writeText(sql)
+      setStatus('Insert SQL copied to clipboard.', 'ok')
+    }
+
+    function normalizeDbUrl(value) {
+      return value.trim().replace(/^libsql:\/\//i, 'https://').replace(/\/+$/, '')
+    }
+
+    function usesLocalApi() {
+      return location.protocol.startsWith('http') && /^(127\.0\.0\.1|localhost)$/i.test(location.hostname)
+    }
+
+    function updateConnectionState(tone, text) {
+      fields.connDot.className = `dot ${tone === 'ok' ? 'ok' : tone === 'bad' ? 'bad' : ''}`.trim()
+      fields.connText.textContent = text
+    }
+
+    function setStatus(message, tone = '') {
+      fields.status.textContent = message
+      fields.status.className = `status ${tone}`.trim()
+    }
+
+    function generateLicenseKey() {
+      let key = 'MSRB'
+      for (let group = 0; group < 4; group++) {
+        let chunk = ''
+        for (let index = 0; index < 4; index++) chunk += chars[Math.floor(Math.random() * chars.length)]
+        key += `-${chunk}`
+      }
+      return key
+    }
+
+    function randomHex(length) {
+      const bytes = new Uint8Array(length / 2)
+      crypto.getRandomValues(bytes)
+      return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')
+    }
+
+    function formatDate(value) {
+      if (!value) return 'lifetime'
+      return String(value).replace('T', ' ').replace(/\.\d+Z?$/, '')
+    }
+
+    function toDateInput(value) {
+      if (!value) return ''
+      const match = String(value).match(/^(\d{4}-\d{2}-\d{2})/)
+      return match ? match[1] : ''
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]))
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/`/g, '&#96;')
+    }
+  </script>
+</body>
+</html>

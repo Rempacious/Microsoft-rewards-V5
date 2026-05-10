@@ -53,7 +53,7 @@ Before submitting a bug report:
 - Logs (remove sensitive info!)
 - Environment details:
     ```
-    - Bot version: 4.0.0
+    - Bot version: 4.0.1
     - Node.js version: v25.3.0
     - OS: Windows 11 / Ubuntu 22.04 / macOS 14
     - Docker: Yes/No
