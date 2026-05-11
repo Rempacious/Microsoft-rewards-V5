@@ -4,12 +4,12 @@ This guide explains only how to prepare the files used by the auto-updater. It d
 
 ## Goal
 
-Make `npm start` detect a new signed release, download the expected archive, verify it, preserve user files, and apply the update.
+Make `npm start` detect a new release, download the expected archive, verify it, preserve user files, and apply the update.
 
 ## Required Environment
 
 - Node.js `24.15.0`
-- access to the update signing private key in `MSRB_UPDATE_PRIVATE_KEY`
+- access to the update signing private key in `MSRB_UPDATE_PRIVATE_KEY` only for private signed channels
 
 ## Files Used By The Updater
 
@@ -122,7 +122,7 @@ Expected result:
 - preserved paths are listed
 - no checksum error appears
 
-9. Commit only the signed manifest and any documentation updates, then push.
+9. Commit only the manifest and any documentation updates, then push.
 
 ## Preserved User Files
 

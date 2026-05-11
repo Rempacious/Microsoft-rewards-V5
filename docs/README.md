@@ -4,8 +4,8 @@ Public documentation for the Microsoft Rewards Bot.
 
 ## Start Here
 
-- **[Install and update](./updates.md)** - how the signed auto-updater works on `npm start`
-- **[Auto-update release checklist](./auto-update-release.md)** - maintainer steps for publishing signed updates
+- **[Install and update](./updates.md)** - how the auto-updater works on `npm start`
+- **[Auto-update release checklist](./auto-update-release.md)** - maintainer steps for publishing updates
 - **[Plugin system overview](./plugins.md)** - how the bot discovers plugins and how `plugins/plugins.jsonc` controls activation
 - **[Create a plugin](./create-plugin.md)** - quick guide for building your own plugin
 - **[Plugin API reference](./plugin-api.md)** - exact interfaces, hooks, and runtime contract

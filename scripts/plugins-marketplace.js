@@ -506,7 +506,7 @@ const HTML = `<!doctype html>
     <header>
       <div>
         <h1>Plugin Desk</h1>
-        <p class="subtitle">Local management for installed plugins, Core entitlement, marketplace entries, checksums, signatures, and update readiness.</p>
+        <p class="subtitle">Local management for installed plugins, Core entitlement, marketplace entries, checksums, and update readiness.</p>
       </div>
       <div class="topline">
         <div class="metric"><span>Bot</span><strong id="bot-version">loading</strong></div>
@@ -633,7 +633,7 @@ const HTML = `<!doctype html>
         '<div>Node range</div><div>' + esc(manifest?.compatibleNode || 'not set') + '</div>' +
         '<div>Archive</div><div>' + esc(manifest?.archiveUrl || 'not set') + '</div>' +
         '<div>Archive sha256</div><div>' + esc(manifest?.sha256 || 'not set') + '</div>' +
-        '<div>Signature</div><div>' + esc(manifest?.signature ? manifest.signature.slice(0, 28) + '...' : 'missing') + '</div>' +
+        '<div>Signature</div><div>' + esc(manifest?.signature ? manifest.signature.slice(0, 28) + '...' : 'not required') + '</div>' +
         '</div><div class="actions"><button class="secondary" data-refresh>Refresh</button></div></article>'
     }
 

@@ -12,7 +12,7 @@ The default channel is `stable`. The updater reads:
 https://raw.githubusercontent.com/QuestPilot/Microsoft-Rewards-Bot/release/updates/stable.json
 ```
 
-The manifest is signed with Ed25519 and includes:
+The manifest includes:
 
 - `botVersion`
 - `coreVersion`
@@ -45,7 +45,7 @@ After an update, missing keys from `config.example.json` and `accounts.example.j
 ```bash
 npm start
 npm run update:check
-npm run update:sign
+npm run update:prepare
 ```
 
 Set `MSRB_UPDATE_CHANNEL=beta` to use another channel. Set `MSRB_UPDATE_MANIFEST_URL` for a custom manifest URL. Set `MSRB_AUTO_UPDATE=0` only for CI or emergency local recovery.

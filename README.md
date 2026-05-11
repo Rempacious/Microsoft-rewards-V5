@@ -26,7 +26,7 @@ This repository includes:
 - automated Microsoft Rewards search and account workflows
 - a public plugin API for custom plugins
 - a local plugin manager available with `npm run plugins`
-- signed auto-update checks when running `npm start`
+- auto-update checks when running `npm start`
 - an official built-in Core plugin that loads only when enabled in `plugins/plugins.jsonc`
 
 ---
@@ -86,7 +86,7 @@ The installer will download the latest Windows installer from the release branch
    npm start
    ```
 
-`npm start` checks the signed release manifest before launch.
+`npm start` checks the release manifest before launch.
 
 `npm run dev` and `-dev` never perform auto-update checks.
 
