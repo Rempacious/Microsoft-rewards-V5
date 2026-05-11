@@ -338,6 +338,7 @@ class UpdateManager {
 
 module.exports = {
     DEFAULT_EXCLUDES,
+    DEFAULT_PUBLIC_KEY,
     UpdateManager,
     canonicalJson,
     stripSignature

@@ -20,6 +20,21 @@ Make `npm start` detect a new signed release, download the expected archive, ver
 - `plugins/official-core.json`: official Core checksum
 - `plugins/catalog.json`: local store catalogue and Core checksum display
 
+## Important Signing Rule
+
+The updater verifies `updates/stable.json` with the public Ed25519 key embedded in `scripts/updater/UpdateManager.js`.
+That means the manifest must be signed with the matching private key from `MSRB_UPDATE_PRIVATE_KEY`.
+
+SSH keys are not enough unless their public key is exactly the same as the updater public key. If the key does not match, already-installed users will reject the manifest before downloading anything.
+
+Run this before signing:
+
+```bash
+MSRB_UPDATE_PRIVATE_KEY="<ed25519-private-key-pem>" npm run update:key:check
+```
+
+If it fails, stop. Find the original update signing private key or ship a manual installer first. Changing the updater public key only helps users after they have manually installed a build containing the new public key.
+
 ## Preparation Steps
 
 1. Build and test the open-source bot.
@@ -62,25 +77,39 @@ The value must match:
 - `plugins/official-core.json` -> `indexSha256`
 - `plugins/catalog.json` -> Core `sha256`
 
-5. Update `updates/stable.json`.
+5. Commit and push the release code before preparing the manifest.
 
-Set:
+The archive must be immutable. Do not point `archiveUrl` at `refs/heads/release.tar.gz`, because every later commit changes that archive and breaks the checksum.
 
-- `botVersion` to the public bot version
-- `coreVersion` to the Core plugin version
-- `compatibleNode` to `24.15.0`
-- `archiveUrl` to the archive users should download
-- `sha256` to the SHA-256 of that archive
+Use the two-commit flow:
 
-Do not edit `signature` manually.
+- commit A: the actual release code and Core files
+- commit B: `updates/stable.json` signed and pointing to commit A's archive
 
-6. Sign the manifest with the private Ed25519 key.
+6. Prepare `updates/stable.json`.
 
 ```bash
+npm run update:prepare
+```
+
+This fills the manifest from the current clean `HEAD`:
+
+- `botVersion` from `package.json`
+- `coreVersion` from `plugins/official-core.json`
+- `compatibleNode` from `package.json`
+- `archiveUrl` as `https://github.com/QuestPilot/Microsoft-Rewards-Bot/archive/<commit>.tar.gz`
+- `sha256` from the downloaded immutable archive
+
+Review the generated values before signing. Do not edit `signature` manually.
+
+7. Verify the signing key and sign the manifest with the private Ed25519 key.
+
+```bash
+MSRB_UPDATE_PRIVATE_KEY="<ed25519-private-key-pem>" npm run update:key:check
 MSRB_UPDATE_PRIVATE_KEY="<ed25519-private-key-pem>" npm run update:sign
 ```
 
-7. Validate the signed update in dry-run mode.
+8. Validate the signed update in dry-run mode.
 
 ```bash
 npm run update:check
@@ -92,6 +121,8 @@ Expected result:
 - local and remote versions are printed
 - preserved paths are listed
 - no checksum or signature error appears
+
+9. Commit only the signed manifest and any documentation updates, then push.
 
 ## Preserved User Files
 

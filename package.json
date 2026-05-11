@@ -23,6 +23,8 @@
         "prestart": "node ./scripts/check-node-version.js",
         "start": "node ./scripts/start.js",
         "prets-start": "node ./scripts/check-node-version.js",
+        "update:prepare": "node ./scripts/prepare-update-manifest.js updates/stable.json",
+        "update:key:check": "node ./scripts/check-update-signing-key.js",
         "update:check": "node ./scripts/update-check.js --dry-run",
         "update:sign": "node ./scripts/sign-update-manifest.js updates/stable.json",
         "ts-start": "ts-node ./src/index.ts",
