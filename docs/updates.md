@@ -19,10 +19,12 @@ The manifest is signed with Ed25519 and includes:
 - `compatibleNode`
 - `archiveUrl`
 - `sha256`
-- `signature`
+- `signature` (optional legacy field)
 - preserved paths
 
-The updater refuses an archive when the manifest signature or archive checksum is invalid.
+The updater always refuses an archive when the archive checksum is invalid.
+Manifest signatures are optional for the public release channel so the updater can keep working even when the old signing key is unavailable.
+Set `MSRB_UPDATE_REQUIRE_SIGNATURE=1` only if you are maintaining a signed private channel and you have the matching private key.
 
 ## Preserved User Files
 

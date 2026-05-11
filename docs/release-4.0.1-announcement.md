@@ -19,11 +19,11 @@ This update focuses on reliability, safer operation, and a smoother setup for bo
 - Session files are kept outside the rebuilt `dist` folder so logins are not wiped by each start/build cycle.
 - Microsoft login handling was improved for password/passkey interruption screens.
 - Dashboard data fallback handling was improved.
-- Auto-update documentation and preserved-file behavior were clarified.
+- Auto-update now uses the GitHub release manifest plus archive SHA-256 verification without requiring the old missing private signing key.
 - Core license documentation now explains that runtime validation calls the official license API, while the backend checks the Turso database and returns a signed response.
 
 ## Notes
 
 - The open-source bot still works without the Core plugin.
 - Core requires a valid license and a configured license response public key.
-- `updates/stable.json` was not changed in this commit because update manifests must be signed with the private Ed25519 update key.
+- Users already on a build that still requires the old manifest signature may need one manual update/install once, because that older updater cannot accept any changed manifest without the lost private key.

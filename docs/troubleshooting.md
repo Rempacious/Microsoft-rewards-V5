@@ -2,7 +2,7 @@
 
 ## Auto-Update Fails
 
-The bot logs the update error and continues with the local version when the network or manifest is unavailable. It refuses to apply an update if the manifest signature or archive checksum is invalid.
+The bot logs the update error and continues with the local version when the network or manifest is unavailable. It refuses to apply an update if the archive checksum is invalid.
 
 Use:
 

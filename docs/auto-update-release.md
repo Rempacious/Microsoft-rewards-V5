@@ -13,27 +13,28 @@ Make `npm start` detect a new signed release, download the expected archive, ver
 
 ## Files Used By The Updater
 
-- `updates/stable.json`: signed manifest for the stable channel
+- `updates/stable.json`: manifest for the stable channel
 - `updates/beta.json`: optional signed manifest for the beta channel
 - `scripts/updater/UpdateManager.js`: manifest verification, archive verification, staging, apply, rollback
 - `scripts/updater/ConfigMigrator.js`: non-destructive `config.json` and `accounts.json` migration
 - `plugins/official-core.json`: official Core checksum
 - `plugins/catalog.json`: local store catalogue and Core checksum display
 
-## Important Signing Rule
+## Signature Policy
 
-The updater verifies `updates/stable.json` with the public Ed25519 key embedded in `scripts/updater/UpdateManager.js`.
-That means the manifest must be signed with the matching private key from `MSRB_UPDATE_PRIVATE_KEY`.
+Public stable updates use GitHub as the source of trust and always verify the downloaded archive with `sha256`.
+The `signature` field is now optional because the original signing private key is not available.
 
-SSH keys are not enough unless their public key is exactly the same as the updater public key. If the key does not match, already-installed users will reject the manifest before downloading anything.
+Signed manifests are still supported for private channels by setting `MSRB_UPDATE_REQUIRE_SIGNATURE=1`.
+In that mode, the manifest must be signed with the private key matching the public Ed25519 key embedded in `scripts/updater/UpdateManager.js`.
 
-Run this before signing:
+If you maintain a signed private channel, run this before signing:
 
 ```bash
 MSRB_UPDATE_PRIVATE_KEY="<ed25519-private-key-pem>" npm run update:key:check
 ```
 
-If it fails, stop. Find the original update signing private key or ship a manual installer first. Changing the updater public key only helps users after they have manually installed a build containing the new public key.
+If it fails, stop. Changing the updater public key only helps users after they have manually installed a build containing the new public key.
 
 ## Preparation Steps
 
@@ -84,7 +85,7 @@ The archive must be immutable. Do not point `archiveUrl` at `refs/heads/release.
 Use the two-commit flow:
 
 - commit A: the actual release code and Core files
-- commit B: `updates/stable.json` signed and pointing to commit A's archive
+- commit B: `updates/stable.json` pointing to commit A's archive
 
 6. Prepare `updates/stable.json`.
 
@@ -100,16 +101,16 @@ This fills the manifest from the current clean `HEAD`:
 - `archiveUrl` as `https://github.com/QuestPilot/Microsoft-Rewards-Bot/archive/<commit>.tar.gz`
 - `sha256` from the downloaded immutable archive
 
-Review the generated values before signing. Do not edit `signature` manually.
+Review the generated values before committing. The public stable manifest does not need `signature`.
 
-7. Verify the signing key and sign the manifest with the private Ed25519 key.
+7. Optional: sign the manifest for a private signed channel.
 
 ```bash
 MSRB_UPDATE_PRIVATE_KEY="<ed25519-private-key-pem>" npm run update:key:check
 MSRB_UPDATE_PRIVATE_KEY="<ed25519-private-key-pem>" npm run update:sign
 ```
 
-8. Validate the signed update in dry-run mode.
+8. Validate the update in dry-run mode.
 
 ```bash
 npm run update:check
@@ -117,10 +118,9 @@ npm run update:check
 
 Expected result:
 
-- the manifest signature is accepted
 - local and remote versions are printed
 - preserved paths are listed
-- no checksum or signature error appears
+- no checksum error appears
 
 9. Commit only the signed manifest and any documentation updates, then push.
 
@@ -148,7 +148,7 @@ If new config keys are added, update the example files. The updater migrates mis
 ## What Not To Do
 
 - Do not ship database tokens, API keys, private keys, or license backend secrets.
-- Do not change `updates/stable.json` without re-signing it.
+- Do not point `archiveUrl` at a moving branch archive.
 - Do not rebuild Core bytecode with another Node.js version.
 - Do not publish source files from Core in `plugins/core`.
 - Do not rely on obfuscation as secret storage.

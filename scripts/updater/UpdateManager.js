@@ -183,6 +183,7 @@ class UpdateManager {
             process.env.MSRB_UPDATE_MANIFEST_URL ||
             `https://raw.githubusercontent.com/${DEFAULT_REPO}/release/updates/${this.channel}.json`
         this.publicKey = process.env.MSRB_UPDATE_PUBLIC_KEY || DEFAULT_PUBLIC_KEY
+        this.requireSignature = options.requireSignature ?? process.env.MSRB_UPDATE_REQUIRE_SIGNATURE === '1'
         this.updatesDir = path.join(this.root, '.updates')
         this.packageJson = readJson(path.join(this.root, 'package.json'))
     }
@@ -246,12 +247,16 @@ class UpdateManager {
         if (manifest.schemaVersion !== 1) throw new Error('Unsupported update manifest schema')
         if (manifest.channel !== this.channel) throw new Error(`Manifest channel mismatch: ${manifest.channel}`)
         if (typeof manifest.botVersion !== 'string') throw new Error('Manifest botVersion missing')
-        if (typeof manifest.signature !== 'string') throw new Error('Manifest signature missing')
 
-        const payload = Buffer.from(canonicalJson(stripSignature(manifest)))
-        const signature = Buffer.from(manifest.signature, 'base64')
-        const ok = crypto.verify(null, payload, this.publicKey, signature)
-        if (!ok) throw new Error('Manifest signature is invalid')
+        if (manifest.signature) {
+            const payload = Buffer.from(canonicalJson(stripSignature(manifest)))
+            const signature = Buffer.from(manifest.signature, 'base64')
+            const ok = crypto.verify(null, payload, this.publicKey, signature)
+            if (!ok && this.requireSignature) throw new Error('Manifest signature is invalid')
+            if (!ok) this.logger.warn('[UPDATER] Manifest signature is invalid; continuing because signature enforcement is disabled')
+        } else if (this.requireSignature) {
+            throw new Error('Manifest signature missing')
+        }
 
         if (manifest.compatibleNode && !this.nodeSatisfies(manifest.compatibleNode)) {
             throw new Error(`Node ${process.version} does not satisfy ${manifest.compatibleNode}`)

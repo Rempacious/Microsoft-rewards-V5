@@ -79,10 +79,28 @@ test('config migrator adds missing keys without replacing user values', () => {
     assert.equal(accounts[0].saveFingerprint.mobile, false)
 })
 
-test('local stable manifest verifies with bundled public key', () => {
+test('local stable manifest verifies with current update policy', () => {
     const updater = new UpdateManager({ root: process.cwd(), logger: { log() {}, warn() {} } })
     const manifest = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'updates', 'stable.json'), 'utf8'))
 
     assert.doesNotThrow(() => updater.verifyManifest(manifest))
     assert.equal(updater.isNewer(manifest.botVersion), false)
+})
+
+test('updater can still enforce signed manifests when requested', () => {
+    const updater = new UpdateManager({
+        root: process.cwd(),
+        logger: { log() {}, warn() {} },
+        requireSignature: true
+    })
+
+    assert.throws(
+        () =>
+            updater.verifyManifest({
+                schemaVersion: 1,
+                channel: 'stable',
+                botVersion: '4.0.1'
+            }),
+        /Manifest signature missing/
+    )
 })
