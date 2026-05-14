@@ -495,13 +495,52 @@ export class MicrosoftRewardsBot {
                     this.userData.dashboardInfo = dashInfo
                 }
 
-                if (this.config.workers.doAppPromotions) await this.workers.doAppPromotions(appData)
-                if (this.config.workers.doDailySet) await this.workers.doDailySet(data, this.mainMobilePage)
-                if (this.config.workers.doSpecialPromotions) await this.workers.doSpecialPromotions(data)
-                if (this.config.workers.doMorePromotions) await this.workers.doMorePromotions(data, this.mainMobilePage)
+                // ═══════════════════════════════════════════════════════════
+                // Task execution with dynamic completion verification.
+                // Each task group re-fetches fresh dashboard data so it
+                // operates on the latest state. The verify-and-retry logic
+                // lives inside TaskBase (doDailySet, doMorePromotions, etc.)
+                // ═══════════════════════════════════════════════════════════
+
+                // 1. App Promotions (uses app dashboard data)
+                if (this.config.workers.doAppPromotions) {
+                    await this.workers.doAppPromotions(appData)
+                }
+
+                // 2. Daily Set — re-fetch dashboard for latest state
+                if (this.config.workers.doDailySet) {
+                    const freshDataForDaily = await this.browser.func.getDashboardData().catch(() => data)
+                    await this.workers.doDailySet(freshDataForDaily, this.mainMobilePage)
+                }
+
+                // 3. Special Promotions — re-fetch dashboard for latest state
+                if (this.config.workers.doSpecialPromotions) {
+                    const freshDataForSpecial = await this.browser.func.getDashboardData().catch(() => data)
+                    await this.workers.doSpecialPromotions(freshDataForSpecial)
+                }
+
+                // 4. More Promotions — re-fetch dashboard for latest state
+                if (this.config.workers.doMorePromotions) {
+                    const freshDataForMore = await this.browser.func.getDashboardData().catch(() => data)
+                    await this.workers.doMorePromotions(freshDataForMore, this.mainMobilePage)
+                }
+
+                // 5. App-only activities (DailyCheckIn, ReadToEarn)
                 if (this.accessToken) {
                     if (this.config.workers.doDailyCheckIn) await this.activities.doDailyCheckIn()
-                    if (this.config.workers.doReadToEarn) await this.activities.doReadToEarn()
+
+                    // Validate Read to Earn eligibility before attempting
+                    if (this.config.workers.doReadToEarn) {
+                        if ((appEarnable?.readToEarn ?? 0) > 0) {
+                            await this.activities.doReadToEarn()
+                        } else {
+                            this.logger.info(
+                                'main',
+                                'READ-TO-EARN',
+                                'Skipped Read to Earn — no earnable points from articles (already completed or not available in this region)'
+                            )
+                        }
+                    }
                 } else if (this.config.workers.doDailyCheckIn || this.config.workers.doReadToEarn) {
                     this.logger.warn(
                         'main',
@@ -510,7 +549,7 @@ export class MicrosoftRewardsBot {
                     )
                 }
 
-                // Daily Streak: expand progression, activate protection, read bonus info
+                // 6. Daily Streak: expand progression, activate protection, read bonus info
                 if (this.config.workers.doDailyStreak) {
                     const streakInfo = await this.activities.doDailyStreak(this.mainMobilePage)
                     if (streakInfo) {
@@ -527,12 +566,12 @@ export class MicrosoftRewardsBot {
                     await this.activities.syncStreakProtection(this.mainMobilePage, desiredEnabled)
                 }
 
-                // Redeem Goal: set auto-redeem goal if configured
+                // 7. Redeem Goal: set auto-redeem goal if configured
                 if (this.config.workers.doRedeemGoal && this.config.redeemGoal?.enabled) {
                     await this.activities.doRedeemGoal(this.mainMobilePage, this.config.redeemGoal)
                 }
 
-                // Claim Points: claim any "Prêt à réclamer" points before searches
+                // 8. Claim Points: claim any available points before searches
                 if (this.config.workers.doClaimPoints) {
                     const claimResult = await this.activities.doClaimPoints(this.mainMobilePage)
                     if (claimResult.claimed) {
@@ -542,6 +581,56 @@ export class MicrosoftRewardsBot {
                             `Claimed ${claimResult.pointsClaimed} points | Entries: ${claimResult.entries.length}`
                         )
                     }
+                }
+
+                // ═══════════════════════════════════════════════════════════
+                // Final verification pass: re-check all quest categories
+                // before proceeding to searches. If any are still incomplete,
+                // give them one last retry.
+                // ═══════════════════════════════════════════════════════════
+                try {
+                    const verifyData = await this.browser.func.getDashboardData()
+                    const todayKey = this.utils.getFormattedDate()
+
+                    const dailyIncomplete = verifyData.dailySetPromotions[todayKey]
+                        ?.filter(x => !x.complete && x.pointProgressMax > 0) ?? []
+                    const moreIncomplete = [
+                        ...new Map(
+                            [...(verifyData.morePromotions ?? []), ...(verifyData.morePromotionsWithoutPromotionalItems ?? [])]
+                                .filter(Boolean)
+                                .map(p => [p.offerId, p] as const)
+                        ).values()
+                    ].filter(x => !x.complete && x.pointProgressMax > 0 && x.exclusiveLockedFeatureStatus !== 'locked' && x.promotionType)
+
+                    const totalIncomplete = dailyIncomplete.length + moreIncomplete.length
+
+                    if (totalIncomplete > 0) {
+                        this.logger.warn(
+                            'main',
+                            'FINAL-VERIFY',
+                            `${totalIncomplete} quest(s) still incomplete before searches (Daily: ${dailyIncomplete.length}, More: ${moreIncomplete.length}) — running final retry`
+                        )
+
+                        if (dailyIncomplete.length > 0 && this.config.workers.doDailySet) {
+                            await this.workers.doDailySet(verifyData, this.mainMobilePage)
+                        }
+                        if (moreIncomplete.length > 0 && this.config.workers.doMorePromotions) {
+                            await this.workers.doMorePromotions(verifyData, this.mainMobilePage)
+                        }
+                    } else {
+                        this.logger.info(
+                            'main',
+                            'FINAL-VERIFY',
+                            '✓ All quests and activities verified complete before searches',
+                            'green'
+                        )
+                    }
+                } catch (verifyError) {
+                    this.logger.warn(
+                        'main',
+                        'FINAL-VERIFY',
+                        `Could not verify quest completion: ${verifyError instanceof Error ? verifyError.message : String(verifyError)}`
+                    )
                 }
 
                 const searchPoints = await this.browser.func.getSearchPoints()

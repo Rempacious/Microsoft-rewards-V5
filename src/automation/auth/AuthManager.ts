@@ -1,6 +1,7 @@
 import type { Page } from 'patchright'
 import { saveSessionData } from '../../helpers/ConfigLoader'
 import type { MicrosoftRewardsBot } from '../../index'
+import { getCurrentContext } from '../../context/ExecutionContext'
 
 import { CodeStrategy } from './strategies/CodeStrategy'
 import { EmailStrategy } from './strategies/EmailStrategy'
@@ -756,22 +757,53 @@ export class AuthManager {
     async verifyBingSession(page: Page) {
         const url =
             'https://www.bing.com/fd/auth/signin?action=interactive&provider=windows_live_id&return_url=https%3A%2F%2Fwww.bing.com%2F'
-        const loopMax = 5
+        const loopMax = 10
 
         this.bot.logger.info(this.bot.isMobile, 'LOGIN-BING', 'Verifying Bing session')
 
         try {
             await page.goto(url, { waitUntil: 'networkidle', timeout: 10000 }).catch(() => {})
 
+            // Retrieve the current account from execution context for login handling
+            const ctx = getCurrentContext()
+            const account = ctx?.account
+
             for (let i = 0; i < loopMax; i++) {
                 if (page.isClosed()) break
 
                 this.bot.logger.debug(this.bot.isMobile, 'LOGIN-BING', `Verification loop ${i + 1}/${loopMax}`)
 
-                const state = await this.detectCurrentState(page)
-                if (state === 'PASSKEY_ERROR') {
-                    this.bot.logger.info(this.bot.isMobile, 'LOGIN-BING', 'Dismissing Passkey error state')
+                const state = await this.detectCurrentState(page, account)
+
+                // Handle login states that appear during Bing session verification
+                if (state === 'EMAIL_INPUT' && account) {
+                    this.bot.logger.info(this.bot.isMobile, 'LOGIN-BING', 'Login page detected, entering email')
+                    await this.emailStrategy.enterEmail(page, account.email)
+                    await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {})
+                    continue
+                }
+
+                if (state === 'PASSWORD_INPUT' && account) {
+                    this.bot.logger.info(this.bot.isMobile, 'LOGIN-BING', 'Password page detected, entering password')
+                    await this.emailStrategy.enterPassword(page, account.password)
+                    await page.keyboard.press('Escape').catch(() => {})
+                    await this.bot.utils.wait(300)
+                    await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {})
+                    continue
+                }
+
+                if (state === 'KMSI_PROMPT') {
+                    this.bot.logger.info(this.bot.isMobile, 'LOGIN-BING', 'KMSI prompt detected, accepting')
+                    await this.bot.browser.utils.ghostClick(page, this.selectors.primaryButton)
+                    await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {})
+                    continue
+                }
+
+                if (state === 'PASSKEY_ERROR' || state === 'PASSKEY_VIDEO') {
+                    this.bot.logger.info(this.bot.isMobile, 'LOGIN-BING', 'Dismissing Passkey prompt')
                     await this.bot.browser.utils.ghostClick(page, this.selectors.secondaryButton)
+                    await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {})
+                    continue
                 }
 
                 const u = new URL(page.url())

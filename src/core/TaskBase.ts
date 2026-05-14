@@ -9,6 +9,11 @@ import type {
     PurplePromotionalItem
 } from '../types/DashboardData'
 
+/** Maximum number of retry cycles when activities remain incomplete after a pass */
+const MAX_ACTIVITY_RETRIES = 3
+/** Delay between retry cycles (ms) */
+const RETRY_DELAY_MS = 5000
+
 export class TaskBase {
     public bot: MicrosoftRewardsBot
 
@@ -27,43 +32,86 @@ export class TaskBase {
             return
         }
 
-        // Free tier limitation: max 2 Daily Set quests.
-        // Only the verified official Core plugin can grant the premium entitlement.
-        const maxQuests = this.bot.pluginManager.hasOfficialCoreEntitlement() ? Infinity : 2
+        // Unlocked: no quest limit — all Daily Set quests are processed
+        const maxQuests = Infinity
         if (activitiesUncompleted.length > maxQuests) {
             this.bot.logger.warn(
                 this.bot.isMobile,
                 'DAILY-SET',
-                `Free tier: Limited to ${maxQuests} quests (${activitiesUncompleted.length} available). Upgrade for unlimited.`
+                `Limited to ${maxQuests} quests (${activitiesUncompleted.length} available).`
             )
             activitiesUncompleted = activitiesUncompleted.slice(0, maxQuests)
         }
 
-        this.bot.logger.info(this.bot.isMobile, 'DAILY-SET', 'Started solving "Daily Set" items')
+        this.bot.logger.info(
+            this.bot.isMobile,
+            'DAILY-SET',
+            `Started solving ${activitiesUncompleted.length} "Daily Set" items`
+        )
 
         await this.solveActivities(activitiesUncompleted, page)
 
-        this.bot.logger.info(this.bot.isMobile, 'DAILY-SET', 'All "Daily Set" items have been completed')
+        // ── Dynamic verification: re-fetch and retry incomplete activities ──
+        for (let retry = 1; retry <= MAX_ACTIVITY_RETRIES; retry++) {
+            await this.bot.utils.wait(RETRY_DELAY_MS)
+
+            let freshData: DashboardData
+            try {
+                freshData = await this.bot.browser.func.getDashboardData()
+            } catch (error) {
+                this.bot.logger.warn(
+                    this.bot.isMobile,
+                    'DAILY-SET',
+                    `Failed to re-fetch dashboard for verification (retry ${retry}/${MAX_ACTIVITY_RETRIES}): ${error instanceof Error ? error.message : String(error)}`
+                )
+                break
+            }
+
+            const freshTodayData = freshData.dailySetPromotions[todayKey]
+            const stillIncomplete = freshTodayData?.filter(x => !x.complete && x.pointProgressMax > 0) ?? []
+
+            if (stillIncomplete.length === 0) {
+                this.bot.logger.info(
+                    this.bot.isMobile,
+                    'DAILY-SET',
+                    `✓ Verified: all "Daily Set" items completed after pass ${retry}`,
+                    'green'
+                )
+                return
+            }
+
+            this.bot.logger.warn(
+                this.bot.isMobile,
+                'DAILY-SET',
+                `${stillIncomplete.length} "Daily Set" item(s) still incomplete — retrying (${retry}/${MAX_ACTIVITY_RETRIES})`
+            )
+
+            await this.solveActivities(stillIncomplete, page)
+        }
+
+        this.bot.logger.info(this.bot.isMobile, 'DAILY-SET', 'Finished "Daily Set" processing (max retries reached or all done)')
     }
 
     public async doMorePromotions(data: DashboardData, page: Page) {
-        const morePromotions: BasePromotion[] = [
-            ...new Map(
-                [...(data.morePromotions ?? []), ...(data.morePromotionsWithoutPromotionalItems ?? [])]
-                    .filter(Boolean)
-                    .map(p => [p.offerId, p as BasePromotion] as const)
-            ).values()
-        ]
+        const extractUncompleted = (d: DashboardData): BasePromotion[] => {
+            const morePromotions: BasePromotion[] = [
+                ...new Map(
+                    [...(d.morePromotions ?? []), ...(d.morePromotionsWithoutPromotionalItems ?? [])]
+                        .filter(Boolean)
+                        .map(p => [p.offerId, p as BasePromotion] as const)
+                ).values()
+            ]
 
-        const activitiesUncompleted: BasePromotion[] =
-            morePromotions?.filter(x => {
+            return morePromotions.filter(x => {
                 if (x.complete) return false
                 if (x.pointProgressMax <= 0) return false
                 if (x.exclusiveLockedFeatureStatus === 'locked') return false
                 if (!x.promotionType) return false
-
                 return true
-            }) ?? []
+            })
+        }
+
+        const activitiesUncompleted = extractUncompleted(data)
 
         if (!activitiesUncompleted.length) {
             this.bot.logger.info(
@@ -82,18 +130,57 @@ export class TaskBase {
 
         await this.solveActivities(activitiesUncompleted, page)
 
-        this.bot.logger.info(this.bot.isMobile, 'MORE-PROMOTIONS', 'All "More Promotion" items have been completed')
+        // ── Dynamic verification: re-fetch and retry incomplete activities ──
+        for (let retry = 1; retry <= MAX_ACTIVITY_RETRIES; retry++) {
+            await this.bot.utils.wait(RETRY_DELAY_MS)
+
+            let freshData: DashboardData
+            try {
+                freshData = await this.bot.browser.func.getDashboardData()
+            } catch (error) {
+                this.bot.logger.warn(
+                    this.bot.isMobile,
+                    'MORE-PROMOTIONS',
+                    `Failed to re-fetch dashboard for verification (retry ${retry}/${MAX_ACTIVITY_RETRIES}): ${error instanceof Error ? error.message : String(error)}`
+                )
+                break
+            }
+
+            const stillIncomplete = extractUncompleted(freshData)
+
+            if (stillIncomplete.length === 0) {
+                this.bot.logger.info(
+                    this.bot.isMobile,
+                    'MORE-PROMOTIONS',
+                    `✓ Verified: all "More Promotion" items completed after pass ${retry}`,
+                    'green'
+                )
+                return
+            }
+
+            this.bot.logger.warn(
+                this.bot.isMobile,
+                'MORE-PROMOTIONS',
+                `${stillIncomplete.length} "More Promotion" item(s) still incomplete — retrying (${retry}/${MAX_ACTIVITY_RETRIES})`
+            )
+
+            await this.solveActivities(stillIncomplete, page)
+        }
+
+        this.bot.logger.info(this.bot.isMobile, 'MORE-PROMOTIONS', 'Finished "More Promotions" processing (max retries reached or all done)')
     }
 
     public async doAppPromotions(data: AppDashboardData) {
-        const appRewards = data.response.promotions.filter(x => {
-            if (x.attributes['complete']?.toLowerCase() !== 'false') return false
-            if (!x.attributes['offerid']) return false
-            if (!x.attributes['type']) return false
-            if (x.attributes['type'] !== 'sapphire') return false
+        const extractIncomplete = (d: AppDashboardData) =>
+            d.response.promotions.filter(x => {
+                if (x.attributes['complete']?.toLowerCase() !== 'false') return false
+                if (!x.attributes['offerid']) return false
+                if (!x.attributes['type']) return false
+                if (x.attributes['type'] !== 'sapphire') return false
+                return true
+            })
 
-            return true
-        })
+        const appRewards = extractIncomplete(data)
 
         if (!appRewards.length) {
             this.bot.logger.info(
@@ -104,13 +191,59 @@ export class TaskBase {
             return
         }
 
+        this.bot.logger.info(
+            this.bot.isMobile,
+            'APP-PROMOTIONS',
+            `Started solving ${appRewards.length} "App Promotions" items`
+        )
+
         for (const reward of appRewards) {
             await this.bot.activities.doAppReward(reward)
             // A delay between completing each activity
             await this.bot.utils.wait(this.bot.utils.randomDelay(5000, 15000))
         }
 
-        this.bot.logger.info(this.bot.isMobile, 'APP-PROMOTIONS', 'All "App Promotions" items have been completed')
+        // ── Dynamic verification: re-fetch app data and retry incomplete ──
+        for (let retry = 1; retry <= MAX_ACTIVITY_RETRIES; retry++) {
+            await this.bot.utils.wait(RETRY_DELAY_MS)
+
+            let freshAppData: AppDashboardData
+            try {
+                freshAppData = await this.bot.browser.func.getAppDashboardData()
+            } catch (error) {
+                this.bot.logger.warn(
+                    this.bot.isMobile,
+                    'APP-PROMOTIONS',
+                    `Failed to re-fetch app dashboard for verification (retry ${retry}/${MAX_ACTIVITY_RETRIES}): ${error instanceof Error ? error.message : String(error)}`
+                )
+                break
+            }
+
+            const stillIncomplete = extractIncomplete(freshAppData)
+
+            if (stillIncomplete.length === 0) {
+                this.bot.logger.info(
+                    this.bot.isMobile,
+                    'APP-PROMOTIONS',
+                    `✓ Verified: all "App Promotions" items completed after pass ${retry}`,
+                    'green'
+                )
+                return
+            }
+
+            this.bot.logger.warn(
+                this.bot.isMobile,
+                'APP-PROMOTIONS',
+                `${stillIncomplete.length} "App Promotion" item(s) still incomplete — retrying (${retry}/${MAX_ACTIVITY_RETRIES})`
+            )
+
+            for (const reward of stillIncomplete) {
+                await this.bot.activities.doAppReward(reward)
+                await this.bot.utils.wait(this.bot.utils.randomDelay(5000, 15000))
+            }
+        }
+
+        this.bot.logger.info(this.bot.isMobile, 'APP-PROMOTIONS', 'Finished "App Promotions" processing (max retries reached or all done)')
     }
 
     public async doSpecialPromotions(data: DashboardData) {

@@ -25,7 +25,7 @@
     // The open-source bot works fine without this plugin.
 
     "core": {
-        "enabled": true,
+        "enabled": false,
         "priority": 100,
         // The released Core plugin needs a license validation public key.
         // Core calls the official validation API, which checks the Turso

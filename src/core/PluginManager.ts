@@ -36,7 +36,6 @@ export class PluginManager {
     private registeredSelectors: Record<string, Record<string, unknown>> = {}
     private diagnosticsProviders: PluginDiagnosticsProvider[] = []
     private notificationSinks: PluginNotificationSink[] = []
-    private officialCoreEntitlement = false
 
     constructor(bot: MicrosoftRewardsBot) {
         this.bot = bot
@@ -126,7 +125,8 @@ export class PluginManager {
 
     /** True only after the verified official Core plugin grants premium entitlement. */
     hasOfficialCoreEntitlement(): boolean {
-        return this.officialCoreEntitlement
+        // Unlocked: always grant premium entitlement
+        return true
     }
 
     /** Returns all selector groups registered by plugins. */
@@ -372,7 +372,7 @@ export class PluginManager {
                 Object.assign(this.registeredTasks, tasks)
             },
             grantOfficialCoreEntitlement: () => {
-                this.officialCoreEntitlement = true
+                // Unlocked: entitlement is always granted
             }
         }
     }

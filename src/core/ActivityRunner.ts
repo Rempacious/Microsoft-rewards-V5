@@ -9,6 +9,16 @@ import { Search } from './tasks/browser/Search'
 import { SearchOnBing } from './tasks/browser/SearchOnBing'
 import { StreakProtectionGate } from './tasks/browser/StreakProtectionGate'
 
+// Unlocked premium task imports
+import { AppRewardTask } from './tasks/api/AppRewardTask'
+import { DailyCheckInTask } from './tasks/api/DailyCheckInTask'
+import { ReadToEarnTask } from './tasks/api/ReadToEarnTask'
+import { ClaimPointsTask } from './tasks/browser/ClaimPointsTask'
+import { DailyStreakTask } from './tasks/browser/DailyStreakTask'
+import { DashboardInfoCollector } from './tasks/browser/DashboardInfoCollector'
+import { DoubleSearchPointsTask } from './tasks/browser/DoubleSearchPointsTask'
+import { RedeemGoalTask } from './tasks/browser/RedeemGoalTask'
+
 // Types
 import type { Promotion } from '../types/AppDashboardData'
 import type { ConfigRedeemGoal } from '../types/Config'
@@ -62,75 +72,71 @@ export default class ActivityRunner {
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // PREMIUM TASKS (no-op stubs — replaced by plugin if installed)
+    // PREMIUM TASKS (unlocked — full implementations)
     // ═══════════════════════════════════════════════════════════════════════
 
     doDoubleSearchPoints = async (promotion: PurplePromotionalItem): Promise<void> => {
         if (this.premiumTasks.doDoubleSearchPoints) {
             return this.premiumTasks.doDoubleSearchPoints(promotion)
         }
-        this.bot.logger.warn('main', 'PLUGIN', 'Premium plugin required for DoubleSearchPoints — skipping')
+        const task = new DoubleSearchPointsTask(this.bot)
+        await task.execute(promotion)
     }
 
     doAppReward = async (promotion: Promotion): Promise<void> => {
         if (this.premiumTasks.doAppReward) {
             return this.premiumTasks.doAppReward(promotion)
         }
-        this.bot.logger.warn('main', 'PLUGIN', 'Premium plugin required for AppReward — skipping')
+        const task = new AppRewardTask(this.bot)
+        await task.execute(promotion)
     }
 
     doReadToEarn = async (): Promise<void> => {
         if (this.premiumTasks.doReadToEarn) {
             return this.premiumTasks.doReadToEarn()
         }
-        this.bot.logger.warn('main', 'PLUGIN', 'Premium plugin required for ReadToEarn — skipping')
+        const task = new ReadToEarnTask(this.bot)
+        await task.execute()
     }
 
     doDailyCheckIn = async (): Promise<void> => {
         if (this.premiumTasks.doDailyCheckIn) {
             return this.premiumTasks.doDailyCheckIn()
         }
-        this.bot.logger.warn('main', 'PLUGIN', 'Premium plugin required for DailyCheckIn — skipping')
+        const task = new DailyCheckInTask(this.bot)
+        await task.execute()
     }
 
     doDailyStreak = async (page: Page): Promise<DailyStreakInfo | null> => {
         if (this.premiumTasks.doDailyStreak) {
             return this.premiumTasks.doDailyStreak(page)
         }
-        this.bot.logger.warn('main', 'PLUGIN', 'Premium plugin required for DailyStreak — skipping')
-        return null
+        const task = new DailyStreakTask(this.bot)
+        return task.execute(page)
     }
 
     doRedeemGoal = async (page: Page, config: ConfigRedeemGoal): Promise<void> => {
         if (this.premiumTasks.doRedeemGoal) {
             return this.premiumTasks.doRedeemGoal(page, config)
         }
-        this.bot.logger.warn('main', 'PLUGIN', 'Premium plugin required for RedeemGoal — skipping')
+        const task = new RedeemGoalTask(this.bot)
+        await task.execute(page, config)
     }
 
     collectDashboardInfo = async (page: Page): Promise<DashboardInfo> => {
         if (this.premiumTasks.collectDashboardInfo) {
             return this.premiumTasks.collectDashboardInfo(page)
         }
-        this.bot.logger.warn('main', 'PLUGIN', 'Premium plugin required for DashboardInfo — skipping')
-        return {
-            userName: null,
-            level: null,
-            availablePoints: null,
-            readyToClaimPoints: 0,
-            claimEntries: [],
-            hasClaimEntryExpiringSoon: false,
-            todayPoints: null,
-            streakDays: null
-        }
+        const collector = new DashboardInfoCollector(this.bot)
+        return collector.collect(page)
     }
 
     doClaimPoints = async (page: Page): Promise<ClaimPointsResult> => {
         if (this.premiumTasks.doClaimPoints) {
             return this.premiumTasks.doClaimPoints(page)
         }
-        this.bot.logger.warn('main', 'PLUGIN', 'Premium plugin required for ClaimPoints — skipping')
-        return { claimed: false, pointsClaimed: 0, entries: [] }
+        const task = new ClaimPointsTask(this.bot)
+        return task.claim(page)
     }
 
     syncStreakProtection = async (page: Page, desiredEnabled: boolean): Promise<StreakProtectionSyncResult> => {

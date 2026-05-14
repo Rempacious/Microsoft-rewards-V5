@@ -80,6 +80,8 @@ export class MobileStrategy {
             const start = Date.now()
             let code = ''
             let lastUrl = ''
+            let stuckOnLoginCount = 0
+            const stuckThreshold = 5 // Skip after 5 consecutive checks on login page (~5s)
 
             while (Date.now() - start < this.maxTimeout) {
                 const currentUrl = this.page.url()
@@ -88,6 +90,7 @@ export class MobileStrategy {
                 if (currentUrl !== lastUrl) {
                     this.bot.logger.debug(this.bot.isMobile, 'LOGIN-APP', `OAuth poll URL changed → ${currentUrl}`)
                     lastUrl = currentUrl
+                    stuckOnLoginCount = 0
                 }
 
                 try {
@@ -99,6 +102,33 @@ export class MobileStrategy {
                         if (code) {
                             this.bot.logger.debug(this.bot.isMobile, 'LOGIN-APP', 'OAuth code detected in redirect URL')
                             break
+                        }
+                    }
+
+                    // Detect if stuck on login/authorize page (login form shown instead of redirect)
+                    if (url.hostname === 'login.live.com' && url.pathname === '/oauth20_authorize.srf') {
+                        // Check if the page is showing a login form (EMAIL_INPUT)
+                        const hasEmailInput = await this.page
+                            .waitForSelector('input#usernameEntry', { state: 'visible', timeout: 200 })
+                            .then(() => true)
+                            .catch(() => false)
+
+                        if (hasEmailInput) {
+                            stuckOnLoginCount++
+                            this.bot.logger.debug(
+                                this.bot.isMobile,
+                                'LOGIN-APP',
+                                `Login form detected on OAuth page (${stuckOnLoginCount}/${stuckThreshold})`
+                            )
+
+                            if (stuckOnLoginCount >= stuckThreshold) {
+                                this.bot.logger.warn(
+                                    this.bot.isMobile,
+                                    'LOGIN-APP',
+                                    'OAuth page stuck on login form — session not carrying over, skipping app token'
+                                )
+                                break
+                            }
                         }
                     }
 
